@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const BACKEND_BASE_URL = process.env.BACKEND_URL || "http://localhost:5000/api";
+const BACKEND_BASE_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}/api`;
 
 const FETCH_TIMEOUT_MS = parseInt(
   process.env.BACKEND_TIMEOUT_MS || "15000",
