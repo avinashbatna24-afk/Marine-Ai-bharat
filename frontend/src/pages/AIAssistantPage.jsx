@@ -20,15 +20,15 @@ export default function AIAssistantPage() {
       id: 'greeting-init',
       type: 'ai',
       data: {
-        decisionStatus: 'SAFE',
-        safetyScore: 94,
-        riskScore: 6,
-        riskLevel: 'Low',
-        nearestPfz: 'PFZ-03',
-        pfzDistance: '18.4',
-        reason: 'Optimal oceanographic telemetry received from INCOIS ERDDAP. Swell and wind speeds remain within safe margins.',
+        decisionStatus: null,
+        safetyScore: null,
+        riskScore: null,
+        riskLevel: null,
+        nearestPfz: null,
+        pfzDistance: null,
+        reason: 'Ready to analyze marine telemetry and conditions.',
         formattedAnswer: `Hello Captain! 🌊 I am Marine AI, your real-time maritime intelligence copilot.\n\nTelemetry for ${selectedLocation?.name || 'Bay of Bengal'} is active and synchronized. How can I assist your vessel today? Inquire about high-potential fishing zones (PFZ), safety risk assessment, or safe navigational routes.`,
-        geofence: { status: 'SAFE' }
+        geofence: null
       }
     }
   ]);
@@ -68,13 +68,13 @@ export default function AIAssistantPage() {
           id: Date.now() + 1,
           type: 'ai',
           data: {
-            decisionStatus: 'CAUTION',
-            safetyScore: 50,
-            riskScore: 50,
-            riskLevel: 'Moderate',
-            reason: 'Live network link offline; displaying local advisory assessment.',
-            formattedAnswer: 'STATUS: CAUTION\nRisk: Moderate (Offline Assessment)\nReason: Fallback analysis indicates 1.5m waves and 16 kt winds.',
-            geofence: { status: 'SAFE' }
+            decisionStatus: 'UNKNOWN',
+            safetyScore: null,
+            riskScore: null,
+            riskLevel: 'Unknown',
+            reason: 'Live network link offline; unable to fetch local advisory assessment.',
+            formattedAnswer: 'STATUS: UNKNOWN\nRisk: Unknown (Offline)\nReason: Live telemetry unavailable.',
+            geofence: null
           }
         }
       ]);
@@ -136,7 +136,7 @@ export default function AIAssistantPage() {
                   <AIResponseCard
                     data={msg.data}
                     onViewAnalysis={() => navigate('/safety-risk')}
-                    onShowRoute={() => navigate('/safe-routes')}
+                    onShowRoute={() => navigate('/safe-routes', { state: { targetDate: msg.data.targetDate } })}
                   />
                 </div>
               );

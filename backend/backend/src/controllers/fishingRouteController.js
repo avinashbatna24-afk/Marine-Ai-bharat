@@ -8,6 +8,7 @@ async function getFishingRoute(req, res) {
     const cols = Number(req.body.cols || 5);
     const hazardCells = req.body.hazardCells || [];
     const restrictedCells = req.body.restrictedCells || [];
+    const targetDate = req.body.targetDate || null;
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return res.status(400).json({
@@ -19,6 +20,7 @@ async function getFishingRoute(req, res) {
     const result = await findBestFishingRoute({
       latitude,
       longitude,
+      targetDate,
       rows,
       cols,
       hazardCells,

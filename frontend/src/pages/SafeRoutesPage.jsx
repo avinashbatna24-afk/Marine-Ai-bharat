@@ -16,7 +16,7 @@ import {
   X,
   Info
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import { findFishingRoute } from '../api/routeApi';
 import { checkGeofence } from '../api/geofenceApi';
 import { useLocation } from '../context/LocationContext';
@@ -26,6 +26,8 @@ import BasemapSwitcher from '../components/map/BasemapSwitcher';
 
 export default function SafeRoutesPage() {
   const navigate = useNavigate();
+  const routerLocation = useRouterLocation();
+  const targetDate = routerLocation.state?.targetDate || null;
   const { selectedLocation, refreshTrigger } = useLocation();
 
   const startLat = selectedLocation?.lat ?? 16.98;
@@ -59,7 +61,8 @@ export default function SafeRoutesPage() {
         const routeRes = await findFishingRoute({
           startLat: startCoords[0],
           startLon: startCoords[1],
-          targetPfzId: 'PFZ-001'
+          targetPfzId: 'PFZ-001',
+          targetDate
         });
 
         if (!isMounted) return;
@@ -92,27 +95,18 @@ export default function SafeRoutesPage() {
   const routeData = routeState.data || {};
   const isFallback = routeState.isFallback || geofenceCheckState.isFallback;
 
-  // Route A (Recommended Safe Corridor): Sweeps cleanly south in deep water with > 5 NM buffer around hazard
-  const liveRoutePoints = useMemo(() => {
-    return [
-      startCoords,
-      [startCoords[0] - 0.025, startCoords[1] + 0.10], // exit port into open sea
-      [startCoords[0] - 0.075, startCoords[1] + 0.20], // south corridor, comfortably below hazard
-      [startCoords[0] - 0.075, startCoords[1] + 0.30], // clear open ocean fairway
-      targetCoords
-    ];
-  }, [startCoords, targetCoords]);
+  const routeDistance = routeData?.distanceKm ? `${Number(routeData.distanceKm).toFixed(1)} km` : 'Unavailable';
+  const routeStatus = routeData?.geofenceStatus || (isFallback ? 'UNAVAILABLE' : 'UNKNOWN');
+  const isRouteSafe = routeStatus === 'ROUTE_SAFE' || routeStatus === 'CLEAR';
 
-  // Route B (Alternative / Direct Path): Directly traverses outer swell hazard fringe
-  const routeBPoints = useMemo(() => {
-    return [
-      startCoords,
-      [startCoords[0] + 0.02, startCoords[1] + 0.10],
-      [startCoords[0] + 0.045, startCoords[1] + 0.20], // intersects/grazes the northern hazard circle
-      [startCoords[0] + 0.005, startCoords[1] + 0.31],
-      targetCoords
-    ];
-  }, [startCoords, targetCoords]);
+  const liveRoutePoints = useMemo(() => {
+    if (routeData && routeData.waypoints && routeData.waypoints.length > 0) {
+      return routeData.waypoints.map(wp => [wp.lat, wp.lon]);
+    }
+    return [];
+  }, [routeData]);
+
+  const routeBPoints = [];
 
   // Custom DivIcon for Start Marker
   const startMarkerIcon = useMemo(() => L.divIcon({
@@ -158,9 +152,7 @@ export default function SafeRoutesPage() {
     iconAnchor: [15, 15]
   }), []);
 
-  const routeDistance = routeData.distanceKm ? `${Number(routeData.distanceKm).toFixed(1)} km` : '21.7 km';
-  const routeStatus = routeData.geofenceStatus || 'ROUTE_SAFE';
-  const isRouteSafe = routeStatus === 'ROUTE_SAFE' || routeStatus === 'CLEAR';
+  const hasValidRoute = liveRoutePoints.length > 0;
 
   return (
     <div className="max-w-[1680px] mx-auto pb-12">
@@ -261,8 +253,9 @@ export default function SafeRoutesPage() {
                   </Popup>
                 </Circle>
 
-                {/* RECOMMENDED LIVE ROUTE (ROUTE A - GREEN DASHED POLYLINE) */}
-                <Polyline
+                {/* RECOMMENDED LIVE ROUTE */}
+                {hasValidRoute && isRouteSafe && (
+                  <Polyline
                   positions={liveRoutePoints}
                   pathOptions={{
                     color: '#10B981',
@@ -287,33 +280,9 @@ export default function SafeRoutesPage() {
                     </div>
                   </Tooltip>
                 </Polyline>
+                )}
 
-                {/* ALTERNATIVE ROUTE (ROUTE B - YELLOW DASHED POLYLINE) */}
-                <Polyline
-                  positions={routeBPoints}
-                  pathOptions={{
-                    color: '#F59E0B',
-                    weight: 4,
-                    dashArray: '8,8'
-                  }}
-                >
-                  <Tooltip sticky direction="top" className="risk-tooltip-mod">
-                    <div className="space-y-1 max-w-[240px] text-xs">
-                      <div className="flex items-center justify-between border-b border-amber-500/40 pb-1">
-                        <span className="font-bold text-amber-400 text-[11px]">Route B (Alternative)</span>
-                        <span className="font-mono text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800 font-bold">
-                          CAUTION
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-slate-200 space-y-0.5">
-                        <p><strong>Status:</strong> Swell Hazard Contact</p>
-                        <p><strong>Hazard Proximity:</strong> Grazes High Wave Sector</p>
-                        <p><strong>Est. Distance:</strong> 24.8 km | <strong>ETA:</strong> ~48 min</p>
-                        <p className="text-amber-300 text-[10px] font-semibold">⚠️ Faster but elevated roll &amp; wash risk</p>
-                      </div>
-                    </div>
-                  </Tooltip>
-                </Polyline>
+
 
                 {/* START MARKER */}
                 <Marker position={startCoords} icon={startMarkerIcon}>
@@ -360,14 +329,12 @@ export default function SafeRoutesPage() {
               <div className="absolute bottom-4 left-4 z-[400] bg-slate-950/85 backdrop-blur-md border border-slate-800 text-white p-3 rounded-xl shadow-xl text-xs space-y-2 select-none min-w-[150px]">
                 <p className="font-bold text-[11px] uppercase tracking-wider text-slate-300">Legend</p>
                 <div className="space-y-1.5 text-[11px]">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-0.5 bg-emerald-500 rounded"></span>
-                    <span>Recommended Route</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-0.5 bg-amber-500 rounded"></span>
-                    <span>Alternative Route</span>
-                  </div>
+                  {hasValidRoute && (
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-0.5 bg-emerald-500 rounded"></span>
+                      <span>Recommended Route</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
                     <span>Avoidance Hazard</span>
@@ -467,11 +434,13 @@ export default function SafeRoutesPage() {
             <div className="bg-[#3E7C6B]/15 border border-[#3E7C6B]/40 rounded-xl p-3.5 space-y-1.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#3E7C6B]">
-                  <ShieldCheck className="w-4 h-4 text-[#3E7C6B]" />
-                  <span>Recommended Route (A)</span>
+                  <ShieldCheck className={`w-4 h-4 ${isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'}`} />
+                  <span className={isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'}>
+                    {isRouteSafe ? 'Recommended Route (A)' : 'Route Blocked'}
+                  </span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/50' : 'bg-[#C9A961]/25 text-[#C9A961] border border-[#C9A961]/50'}`}>
-                  {isRouteSafe ? 'Clear' : 'Caution'}
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/50' : 'bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/50'}`}>
+                  {isRouteSafe ? 'Clear' : 'DO NOT SAIL'}
                 </span>
               </div>
               <p className="text-[11px] text-[#D8D2C2]">
@@ -487,12 +456,12 @@ export default function SafeRoutesPage() {
 
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A] text-center">
                 <span className="text-[10px] text-[#8EA5B5] font-medium block">ETA</span>
-                <span className="font-mono font-bold text-[#D8D2C2] text-sm">54 min</span>
+                <span className="font-mono font-bold text-[#D8D2C2] text-sm">--</span>
               </div>
 
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A] text-center">
                 <span className="text-[10px] text-[#8EA5B5] font-medium block">Risk Level</span>
-                <span className="font-mono font-extrabold text-[#3E7C6B] text-sm">{isRouteSafe ? 'LOW' : 'MODERATE'}</span>
+                <span className={`font-mono font-extrabold text-sm ${isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'}`}>{isRouteSafe ? 'LOW' : 'HIGH'}</span>
               </div>
             </div>
 
@@ -504,7 +473,7 @@ export default function SafeRoutesPage() {
 
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A]">
                 <span className="text-[10px] text-[#8EA5B5] font-medium block">Fuel Saved vs Alt</span>
-                <span className="font-mono font-bold text-[#3E7C6B] text-sm">9.8 L</span>
+                <span className="font-mono font-bold text-[#3E7C6B] text-sm">--</span>
               </div>
             </div>
           </div>
@@ -530,20 +499,7 @@ export default function SafeRoutesPage() {
                 </div>
               </div>
 
-              <div
-                onClick={() => setSelectedRoute('Route B')}
-                className={`p-2.5 rounded-lg border flex items-center justify-between transition-all cursor-pointer ${
-                  selectedRoute === 'Route B'
-                    ? 'bg-[#C9A961]/15 border-[#C9A961] font-semibold'
-                    : 'bg-[#0B1E2D] border-[#1E3F5A] hover:bg-[#183852]'
-                }`}
-              >
-                <span className="text-[#C9A961] font-bold">Route B (Alternative)</span>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-[#D8D2C2]">26.1 km</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#C9A961]/25 text-[#C9A961] border border-[#C9A961]/40">MODERATE</span>
-                </div>
-              </div>
+
             </div>
           </div>
 

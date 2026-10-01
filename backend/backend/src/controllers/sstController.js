@@ -25,9 +25,9 @@ async function getMarineSST(req, res) {
       data = {
         latitude: lat,
         longitude: lon,
-        sst: 28.4,
-        source: "INCOIS ERDDAP (Cached)",
-        status: "LIVE_FALLBACK"
+        sst: null,
+        source: "INCOIS ERDDAP",
+        status: "UNAVAILABLE"
       };
     }
 

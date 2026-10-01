@@ -563,12 +563,21 @@ export const tools = {
 
     const { latitude, longitude } = getLocation(params);
 
+    const query = String(params.userQuery || params.query || "").toLowerCase();
+    let targetDate = params.targetDate || null;
+    if (!targetDate && (query.includes("tomorrow") || query.includes("రేపు"))) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      targetDate = tomorrow.toISOString().slice(0, 10);
+    }
+
     const live = await fetchBackend("/fishing-route/find", {
       method: "POST",
 
       body: {
         latitude,
         longitude,
+        targetDate,
 
         rows: Number(params.rows || 5),
 
@@ -585,21 +594,14 @@ export const tools = {
     }
 
     return {
-      success: true,
-      source: "[FALLBACK_ALGORITHM] Precomputed Safe Navigation Route",
+      success: false,
+      source: "[LIVE_DATA_UNAVAILABLE] Route generation failed or timed out",
       data: {
-        distance: "28.4 km",
-        distanceKm: 28.4,
-        waypoints: [
-          { lat: latitude, lon: longitude },
-          { lat: 17.54, lon: 83.25 },
-          { lat: 17.39, lon: 83.27 }
-        ],
-        avoidedHazards: [],
-        marineWarning: { level: "LOW", warning: false },
-        risk: { level: "LOW", score: 15, factors: ["Clear navigation corridor"] },
-        status: "ROUTE_SAFE",
-        message: "Optimal risk-aware navigation corridor avoiding hazards."
+        success: false,
+        route: [],
+        geographicRoute: [],
+        status: "ROUTE_UNAVAILABLE",
+        message: "Live route service is unavailable."
       },
     };
   },

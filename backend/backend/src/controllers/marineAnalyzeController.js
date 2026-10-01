@@ -295,6 +295,9 @@ async function analyzeMarine(req, res) {
       decisionStatus = "NOT SAFE";
     } else if (safetyStatus === "CAUTION") {
       decisionStatus = "CAUTION";
+    } else if (warning?.level === "UNAVAILABLE" || cyclone?.active === null) {
+      safetyStatus = "UNKNOWN";
+      decisionStatus = "UNKNOWN";
     }
 
     const isInsideGeofence = geofence?.insideRestrictedZone === true;
@@ -412,6 +415,8 @@ async function analyzeMarine(req, res) {
             formattedAnswer = `${dateInfo.labelTe} సముద్ర పరిస్థితులు చేపల వేటకు **అనుకూలంగా (సురక్షితం)** ఉన్నాయి.\n• గాలి వేగం: ${weather?.windSpeed ?? 6.5} నాట్లు (${weather?.windDirection || "వాయువ్యం"})\n• అలల ఎత్తు: ${ocean?.waveHeight ?? 1.1} మీటర్లు (ప్రశాంత సముద్రం)\n• సముద్ర ఉష్ణోగ్రత (SST): ${ocean?.sst ? `${ocean.sst}°C` : "29.4°C"}\n• వర్షపు సంభావ్యత: ${weather?.precipitationProbability ?? 0}%\n• చేపల జోన్: ${pfzInfoTe}\n• సలహా: సముద్ర పరిస్థితులు ప్రశాంతంగా ఉన్నాయి. లైఫ్ జాకెట్లు ధరించి, VHF ఛానల్ 16 ని అందుబాటులో ఉంచుకోండి.`;
           } else if (decisionStatus === "CAUTION") {
             formattedAnswer = `${dateInfo.labelTe} సముద్ర పరిస్థితుల్లో **జాగ్రత్త (Caution) అవసరం**.\n• గాలి వేగం: ${weather?.windSpeed ?? 12} నాట్లు (గరిష్టంగా ${weather?.windGust ?? 16} నాట్లు)\n• అలల ఎత్తు: ${ocean?.waveHeight ?? 1.2} మీటర్లు\n• వర్షపు సంభావ్యత: ${weather?.precipitationProbability ?? 65}%\n• చేపల జోన్: ${pfzInfoTe}\n• సలహా: గాలులు మరియు అలలు నియంత్రణలోనే ఉన్నప్పటికీ, వర్షపు జల్లులు మరియు ఈదురు గాలుల సంభావ్యత ఉన్నందున చిన్న పడవలు తీరానికి సమీపంలో ఉండడం మంచిది.`;
+          } else if (decisionStatus === "UNKNOWN") {
+            formattedAnswer = `${dateInfo.labelTe} అధికారిక సముద్ర భద్రతా డేటా **అందుబాటులో లేదు (UNKNOWN)**.\n• గాలి వేగం: ${weather?.windSpeed ?? 12} నాట్లు\n• అలల ఎత్తు: ${ocean?.waveHeight ?? 1.2} మీటర్లు\n• చేపల జోన్: ${pfzInfoTe}\n• సలహా: అధికారిక హెచ్చరికలు మరియు తుఫాను డేటా ధృవీకరించబడలేదు. జాగ్రత్తగా వ్యవహరించండి మరియు సముద్రంలోకి వెళ్లేముందు స్థానిక అధికారులను సంప్రదించండి.`;
           } else {
             formattedAnswer = `${dateInfo.labelTe} సముద్ర పరిస్థితులు **ప్రమాదకరంగా (సురక్షితం కాదు)** ఉన్నాయి.\n• గాలి వేగం: ${weather?.windSpeed ?? 28} నాట్లు (ఈదురు గాలులు: ${weather?.windGust ?? 35} నాట్లు)\n• అలల ఎత్తు: ${ocean?.waveHeight ?? 2.8} మీటర్లు\n• సలహా: ${reasonTe || "వాతావరణ హెచ్చరికల దృష్ట్యా వేటకు వెళ్లడం శ్రేయస్కరం కాదు. పరిస్థితులు చక్కబడే వరకు తీరంలోనే ఉండండి."}`;
           }
@@ -461,6 +466,8 @@ async function analyzeMarine(req, res) {
             formattedAnswer = `For ${dateInfo.labelEn}, marine conditions are **favorable for fishing (SAFE)**.\n• Wind: ${weather?.windSpeed ?? 6.5} knots (${windDirStr} gentle breeze)\n• Waves: ${ocean?.waveHeight ?? 1.1} m (calm to slight sea state)\n• Sea Temp (SST): ${sstStr}\n• Rain: ${weather?.precipitationProbability ?? 0}% probability\n• PFZ Proximity: ${pfzInfoEn}\n• Advisory: Sea conditions are calm and favorable for navigation. No restricted geofences detected along passage corridors. Maintain standard VHF Channel 16 watch.`;
           } else if (decisionStatus === "CAUTION") {
             formattedAnswer = `For ${dateInfo.labelEn}, marine conditions indicate **PROCEED WITH CAUTION**.\n• Wind: ${weather?.windSpeed ?? 12} knots with gusts up to ${weather?.windGust ?? 16} knots\n• Waves: ${ocean?.waveHeight ?? 1.2} m moderate swell\n• Rain Probability: ${weather?.precipitationProbability ?? 65}%\n• PFZ Proximity: ${pfzInfoEn}\n• Advisory: While sustained winds and waves remain manageable, elevated rain probability and localized squall potential suggest extra vigilance. Small motorized crafts should avoid distant offshore voyages and stay within safe return range.`;
+          } else if (decisionStatus === "UNKNOWN") {
+            formattedAnswer = `For ${dateInfo.labelEn}, official marine safety data is **UNAVAILABLE (UNKNOWN)**.\n• Wind: ${weather?.windSpeed ?? 12} knots\n• Waves: ${ocean?.waveHeight ?? 1.2} m\n• PFZ Proximity: ${pfzInfoEn}\n• Advisory: Essential official warnings or cyclone tracking data could not be verified. Proceed with extreme caution and manually check local port advisories before sailing.`;
           } else {
             formattedAnswer = `For ${dateInfo.labelEn}, sea conditions are **HAZARDOUS (NOT SAFE)**.\n• Wind: ${weather?.windSpeed ?? 28} knots (gusts ${weather?.windGust ?? 35} knots)\n• Waves: ${ocean?.waveHeight ?? 3.0} m rough seas\n• Advisory: ${decisionReason}. Port Authority advises small fishing crafts to suspend sea operations until conditions improve.`;
           }
@@ -472,7 +479,7 @@ async function analyzeMarine(req, res) {
     const isSafetyQuery = intent === "FISHING_SAFETY" || intent === "RISK";
     const visibleDecisionStatus = isSafetyQuery ? decisionStatus : null;
     const recommendationCode = isSafetyQuery
-      ? (decisionStatus === "SAFE" ? "SAFE_TO_SAIL" : decisionStatus === "CAUTION" ? "PROCEED_WITH_CAUTION" : "DO_NOT_SAIL")
+      ? (decisionStatus === "SAFE" ? "SAFE_TO_SAIL" : decisionStatus === "CAUTION" ? "PROCEED_WITH_CAUTION" : decisionStatus === "UNKNOWN" ? "UNKNOWN_VERIFY_LOCALLY" : "DO_NOT_SAIL")
       : "ADVISORY_INFO";
 
     // Top-level explainability & evidence aggregation

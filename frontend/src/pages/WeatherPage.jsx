@@ -207,12 +207,18 @@ export default function WeatherPage() {
       const dayKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()];
       const dayName = t(dayKey) || d.toLocaleDateString('en-US', { weekday: 'short' });
       const mName = d.toLocaleDateString(language === 'TE' ? 'te-IN' : 'en-US', { month: 'short' });
+      
+      const tNum = typeof weatherData.temperature === 'number' ? weatherData.temperature : null;
+      const tStr = tNum !== null ? `${Math.round(tNum - 2)}° / ${Math.round(tNum + 2)}°` : '--° / --°';
+      const wStr = typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed} kt ${weatherData.windDirection}` : '--';
+      const pStr = typeof weatherData.precipitationProbability === 'number' ? `${weatherData.precipitationProbability} %` : '--';
+
       fallbackDays.push({
         date: d.toISOString().split('T')[0],
         displayDay: `${dayName}, ${d.getDate()} ${mName}`,
-        temp: `${Math.round(weatherData.temperature - 2)}° / ${Math.round(weatherData.temperature + 2)}°`,
-        wind: `${weatherData.windSpeed} kt ${weatherData.windDirection}`,
-        precip: `${weatherData.precipitationProbability} %`,
+        temp: tStr,
+        wind: wStr,
+        precip: pStr,
         icon: i === 0 ? weatherData.condition : (i % 2 === 0 ? 'sun' : 'sun-cloud')
       });
     }
@@ -221,16 +227,16 @@ export default function WeatherPage() {
 
   // Hourly forecast list (live fallback or static structure)
   const defaultHourlyData = [
-    { time: 'NOW', temp: `${Math.round(weatherData.temperature)}°`, wind: `${weatherData.windSpeed} kt ${weatherData.windDirection}`, condition: weatherData.condition },
-    { time: '11 AM', temp: `${Math.round(weatherData.temperature + 1)}°`, wind: `${weatherData.windSpeed + 1} kt ${weatherData.windDirection}`, condition: weatherData.condition },
-    { time: '12 PM', temp: `${Math.round(weatherData.temperature + 2)}°`, wind: `${weatherData.windSpeed + 2} kt ${weatherData.windDirection}`, condition: weatherData.condition },
-    { time: '1 PM', temp: `${Math.round(weatherData.temperature + 2)}°`, wind: `${weatherData.windSpeed + 2} kt ${weatherData.windDirection}`, condition: weatherData.condition },
-    { time: '2 PM', temp: `${Math.round(weatherData.temperature + 1)}°`, wind: `${weatherData.windSpeed + 1} kt ${weatherData.windDirection}`, condition: 'cloud' },
-    { time: '3 PM', temp: `${Math.round(weatherData.temperature)}°`, wind: `${weatherData.windSpeed} kt ${weatherData.windDirection}`, condition: 'rain' },
-    { time: '4 PM', temp: `${Math.round(weatherData.temperature)}°`, wind: `${weatherData.windSpeed - 1} kt ${weatherData.windDirection}`, condition: 'rain' },
-    { time: '5 PM', temp: `${Math.round(weatherData.temperature - 1)}°`, wind: `${weatherData.windSpeed - 2} kt ${weatherData.windDirection}`, condition: 'cloud' },
-    { time: '6 PM', temp: `${Math.round(weatherData.temperature - 1)}°`, wind: `${weatherData.windSpeed - 3} kt ${weatherData.windDirection}`, condition: 'cloud' },
-    { time: '7 PM', temp: `${Math.round(weatherData.temperature - 2)}°`, wind: `${weatherData.windSpeed - 3} kt ${weatherData.windDirection}`, condition: 'night' },
+    { time: 'NOW', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed} kt` : '--', condition: weatherData.condition },
+    { time: '11 AM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature + 1)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed + 1} kt` : '--', condition: weatherData.condition },
+    { time: '12 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature + 2)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed + 2} kt` : '--', condition: weatherData.condition },
+    { time: '1 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature + 2)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed + 2} kt` : '--', condition: weatherData.condition },
+    { time: '2 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature + 1)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed + 1} kt` : '--', condition: 'cloud' },
+    { time: '3 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed} kt` : '--', condition: 'rain' },
+    { time: '4 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed - 1} kt` : '--', condition: 'rain' },
+    { time: '5 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature - 1)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed - 2} kt` : '--', condition: 'cloud' },
+    { time: '6 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature - 1)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed - 3} kt` : '--', condition: 'cloud' },
+    { time: '7 PM', temp: typeof weatherData.temperature === 'number' ? `${Math.round(weatherData.temperature - 2)}°` : '--°', wind: typeof weatherData.windSpeed === 'number' ? `${weatherData.windSpeed - 3} kt` : '--', condition: 'night' },
   ];
 
   const renderWeatherIcon = (type) => {

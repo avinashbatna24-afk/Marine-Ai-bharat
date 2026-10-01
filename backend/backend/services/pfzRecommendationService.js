@@ -42,8 +42,8 @@ async function getBestFishingZones({ latitude, longitude, maxDistance = 150 }) {
         `✓ Close distance: ${recommendedZone.distanceKm} km`,
         `✓ Data source: ${recommendedZone.source || "INCOIS"}`,
       ],
-      overallSuitability: `${recommendedZone.aiSuitabilityScore || 85}/100`,
-      confidenceScore: recommendedZone.confidenceScore || 85,
+      overallSuitability: recommendedZone.aiSuitabilityScore ? `${recommendedZone.aiSuitabilityScore}/100` : "Unavailable",
+      confidenceScore: recommendedZone.confidenceScore || null,
       perFactorBreakdown: recommendedZone.perFactorBreakdown || {},
       missingDataDisclosure: recommendedZone.missingDataDisclosure || null,
       rejectedAlternatives: alternatives.map((alt) => ({

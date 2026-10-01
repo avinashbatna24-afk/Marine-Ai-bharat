@@ -27,42 +27,42 @@ export function adaptTelemetry(weatherData = {}, oceanData = {}) {
 
   return {
     wind: {
-      speed: w.windSpeed ?? 14,
-      gust: w.windGust ?? 18,
+      speed: w.windSpeed ?? null,
+      gust: w.windGust ?? null,
       direction: w.windDirection || 'NE',
       unit: 'kt',
-      label: w.windSpeed > 25 ? 'High' : w.windSpeed > 15 ? 'Moderate' : 'Low'
+      label: w.windSpeed != null ? (w.windSpeed > 25 ? 'High' : w.windSpeed > 15 ? 'Moderate' : 'Low') : 'Unknown'
     },
     waves: {
-      height: o.waveHeight ?? 1.2,
-      period: o.wavePeriod ?? 6.5,
+      height: o.waveHeight ?? null,
+      period: o.wavePeriod ?? null,
       unit: 'm',
-      label: o.waveHeight > 2.5 ? 'High' : o.waveHeight > 1.5 ? 'Moderate' : 'Low'
+      label: o.waveHeight != null ? (o.waveHeight > 2.5 ? 'High' : o.waveHeight > 1.5 ? 'Moderate' : 'Low') : 'Unknown'
     },
     sst: {
-      value: o.sst ?? 28.4,
+      value: o.sst ?? null,
       unit: '°C',
-      label: o.sst > 30 ? 'High' : 'Normal'
+      label: o.sst != null ? (o.sst > 30 ? 'High' : 'Normal') : 'Unknown'
     },
     chlorophyll: {
-      value: o.chlorophyll ?? 2.8,
+      value: o.chlorophyll ?? null,
       unit: 'mg/m³',
-      label: 'High'
+      label: o.chlorophyll != null ? 'High' : 'Unknown'
     },
     current: {
-      speed: o.currentSpeed ?? 0.6,
+      speed: o.currentSpeed ?? null,
       direction: o.currentDirection || 'NE',
       unit: 'm/s',
-      label: o.currentSpeed > 1.0 ? 'Strong' : 'Moderate'
+      label: o.currentSpeed != null ? (o.currentSpeed > 1.0 ? 'Strong' : 'Moderate') : 'Unknown'
     },
     visibility: {
-      value: w.visibility ?? 10,
+      value: w.visibility ?? null,
       unit: 'km',
-      label: 'Good'
+      label: w.visibility != null ? 'Good' : 'Unknown'
     },
-    weatherCode: w.weatherCode ?? 0,
-    precipitation: w.precipitation ?? 0,
-    source: w.source || o.source || 'live'
+    weatherCode: w.weatherCode ?? null,
+    precipitation: w.precipitation ?? null,
+    source: w.source || o.source || 'unavailable'
   };
 }
 
@@ -79,9 +79,9 @@ export function adaptPfzModel(pfz) {
 
   return {
     id: pfz.id || pfz.pfz_id || `PFZ-${Math.random().toString(36).substr(2, 5)}`,
-    name: pfz.name || pfz.location_name || `PFZ Zone (${pfz.latitude?.toFixed(2) || '16.8'}, ${pfz.longitude?.toFixed(2) || '82.4'})`,
-    latitude: pfz.latitude ?? pfz.lat ?? 16.742,
-    longitude: pfz.longitude ?? pfz.lon ?? 82.491,
+    name: pfz.name || pfz.location_name || `PFZ Zone (${pfz.latitude?.toFixed(2) || 'Unknown'}, ${pfz.longitude?.toFixed(2) || 'Unknown'})`,
+    latitude: pfz.latitude ?? pfz.lat ?? null,
+    longitude: pfz.longitude ?? pfz.lon ?? null,
     score,
     hasConfidence,
     category: pfz.category || tier,
@@ -89,11 +89,11 @@ export function adaptPfzModel(pfz) {
     sector: pfz.sector || pfz.properties?.sector || null,
     length: pfz.length || pfz.properties?.length || null,
     distanceKm: pfz.distanceKm ?? pfz.distance_km ?? pfz.distance ?? null,
-    depth: pfz.depth ?? pfz.depth_m ?? 45,
-    sst: pfz.sst ?? pfz.water_temp ?? 28.4,
-    chlorophyll: pfz.chlorophyll ?? pfz.chla ?? 2.8,
-    bearing: pfz.bearing ?? pfz.bearing_deg ?? 'SE',
-    validUntil: pfz.validUntil || pfz.valid_until || 'Today 18:00 IST',
+    depth: pfz.depth ?? pfz.depth_m ?? null,
+    sst: pfz.sst ?? pfz.water_temp ?? null,
+    chlorophyll: pfz.chlorophyll ?? pfz.chla ?? null,
+    bearing: pfz.bearing ?? pfz.bearing_deg ?? null,
+    validUntil: pfz.validUntil || pfz.valid_until || null,
     source: pfz.source || 'INCOIS'
   };
 }
@@ -106,23 +106,23 @@ export function adaptPfzModel(pfz) {
 export function adaptRiskScore(backendRisk) {
   if (!backendRisk) {
     return {
-      rawScore: 40,
-      score: 40,
-      level: 'Moderate',
+      rawScore: null,
+      score: null,
+      level: 'Unavailable',
       factors: [],
       perFactorBreakdown: {},
-      confidenceScore: 0.92,
-      explainability: 'Favorable marine conditions with localized wind gusts.'
+      confidenceScore: null,
+      explainability: 'Risk data unavailable.'
     };
   }
 
   const rawScore = typeof backendRisk === 'number'
     ? backendRisk
-    : (backendRisk.score ?? backendRisk.riskScore ?? backendRisk.riskIndex ?? 40);
+    : (backendRisk.score ?? backendRisk.riskScore ?? backendRisk.riskIndex ?? null);
 
   const gaugeScore = typeof backendRisk.gaugeScore === 'number'
     ? backendRisk.gaugeScore
-    : Math.min(100, Math.max(0, Math.round(rawScore)));
+    : (rawScore !== null ? Math.min(100, Math.max(0, Math.round(rawScore))) : null);
 
   let level = backendRisk.level;
   if (!level) {
@@ -365,31 +365,31 @@ export function weatherCodeToCondition(code) {
  */
 export function adaptWeatherModel(rawWeather = {}) {
   const w = rawWeather || {};
-  const speed = w.windSpeed ?? 14;
-  const gust = w.windGust ?? 20;
+  const speed = w.windSpeed ?? null;
+  const gust = w.windGust ?? null;
   const dir = degreesToCardinal(w.windDirection || 'NE');
 
   return {
     windSpeed: typeof speed === 'number' ? Math.round(speed) : speed,
     windGust: typeof gust === 'number' ? Math.round(gust) : gust,
     windDirection: dir,
-    windSpeedLabel: speed > 25 ? 'High' : speed > 12 ? 'Moderate' : 'Low',
-    windGustLabel: gust > 30 ? 'Severe' : gust > 18 ? 'Moderate' : 'Low',
-    temperature: w.temperature ?? w.temp ?? 28.4,
-    tempLabel: (w.temperature ?? 28.4) > 32 ? 'High' : 'Normal',
-    humidity: w.humidity ?? 74,
-    humidityLabel: (w.humidity ?? 74) > 70 ? 'High' : 'Moderate',
-    precipitation: w.precipitation ?? 0,
-    precipitationProbability: w.precipitationProbability ?? w.rainProbability ?? 10,
-    precipitationLabel: (w.precipitationProbability ?? 10) > 40 ? 'High' : (w.precipitationProbability ?? 10) > 20 ? 'Moderate' : 'Low',
-    visibility: w.visibility ?? 10,
-    visibilityLabel: (w.visibility ?? 10) >= 8 ? 'Good' : 'Moderate',
-    pressure: w.pressure ?? 1012,
-    uvIndex: w.uvIndex ?? '6 (High)',
-    dewPoint: w.dewPoint ?? 23,
-    weatherCode: w.weatherCode ?? 2,
+    windSpeedLabel: speed != null ? (speed > 25 ? 'High' : speed > 12 ? 'Moderate' : 'Low') : 'Unknown',
+    windGustLabel: gust != null ? (gust > 30 ? 'Severe' : gust > 18 ? 'Moderate' : 'Low') : 'Unknown',
+    temperature: w.temperature ?? w.temp ?? null,
+    tempLabel: (w.temperature ?? null) != null ? ((w.temperature > 32) ? 'High' : 'Normal') : 'Unknown',
+    humidity: w.humidity ?? null,
+    humidityLabel: (w.humidity ?? null) != null ? ((w.humidity > 70) ? 'High' : 'Moderate') : 'Unknown',
+    precipitation: w.precipitation ?? null,
+    precipitationProbability: w.precipitationProbability ?? w.rainProbability ?? null,
+    precipitationLabel: (w.precipitationProbability ?? null) != null ? ((w.precipitationProbability > 40) ? 'High' : (w.precipitationProbability > 20) ? 'Moderate' : 'Low') : 'Unknown',
+    visibility: w.visibility ?? null,
+    visibilityLabel: (w.visibility ?? null) != null ? ((w.visibility >= 8) ? 'Good' : 'Moderate') : 'Unknown',
+    pressure: w.pressure ?? null,
+    uvIndex: w.uvIndex ?? null,
+    dewPoint: w.dewPoint ?? null,
+    weatherCode: w.weatherCode ?? null,
     condition: weatherCodeToCondition(w.weatherCode),
-    source: w.source || 'Open-Meteo Weather API'
+    source: w.source || 'Unavailable'
   };
 }
 
@@ -400,25 +400,25 @@ export function adaptWeatherModel(rawWeather = {}) {
  */
 export function adaptOceanModel(rawOcean = {}) {
   const o = rawOcean || {};
-  const waveHeight = o.waveHeight ?? 1.2;
-  const wavePeriod = o.wavePeriod ?? 6.5;
-  const sst = o.sst ?? 28.4;
-  const chlorophyll = o.chlorophyll ?? 2.8;
-  const currentSpeed = o.currentSpeed ?? 0.6;
+  const waveHeight = o.waveHeight ?? null;
+  const wavePeriod = o.wavePeriod ?? null;
+  const sst = o.sst ?? null;
+  const chlorophyll = o.chlorophyll ?? null;
+  const currentSpeed = o.currentSpeed ?? null;
   const currentDirection = degreesToCardinal(o.currentDirection || 'NE');
 
   return {
     waveHeight,
-    waveLabel: waveHeight > 2.5 ? 'High' : waveHeight > 1.2 ? 'Moderate' : 'Low',
+    waveLabel: waveHeight != null ? (waveHeight > 2.5 ? 'High' : waveHeight > 1.2 ? 'Moderate' : 'Low') : 'Unknown',
     wavePeriod,
     sst,
-    sstLabel: sst > 30 ? 'High' : 'Normal',
+    sstLabel: sst != null ? (sst > 30 ? 'High' : 'Normal') : 'Unknown',
     chlorophyll,
     currentSpeed,
     currentDirection,
-    currentLabel: currentSpeed > 1.0 ? 'Strong' : 'Moderate',
-    seaState: o.seaState || (waveHeight > 2.0 ? 'Rough' : 'Moderate'),
-    source: o.source || 'Open-Meteo Marine API'
+    currentLabel: currentSpeed != null ? (currentSpeed > 1.0 ? 'Strong' : 'Moderate') : 'Unknown',
+    seaState: o.seaState || (waveHeight != null ? (waveHeight > 2.0 ? 'Rough' : 'Moderate') : 'Unknown'),
+    source: o.source || 'Unavailable'
   };
 }
 
@@ -438,18 +438,18 @@ export function adaptWarningsModel(rawWarnings = {}) {
     list = w.factors.map((factor, idx) => ({
       id: `warn-${idx}`,
       title: factor,
-      severity: w.level || 'HIGH',
-      description: `IMD Coastal Advisory for ${w.region || 'Coastal Andhra Pradesh'}. Exercise caution during sea navigation.`,
-      area: w.region || 'Coastal Andhra Pradesh'
+      severity: w.level || 'UNKNOWN',
+      description: `Advisory for ${w.region || 'Coastal area'}.`,
+      area: w.region || 'Coastal area'
     }));
   }
 
   return {
     hasWarning,
     count: list.length,
-    level: w.level || (hasWarning ? 'HIGH' : 'CLEAR'),
-    region: w.region || 'Coastal Andhra Pradesh',
-    source: w.source || 'India Meteorological Department',
+    level: w.level || (hasWarning ? 'UNKNOWN' : 'UNAVAILABLE'),
+    region: w.region || 'Unknown',
+    source: w.source || 'Unavailable',
     warnings: list
   };
 }

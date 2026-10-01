@@ -11,25 +11,25 @@ import { adaptRiskScore } from './adapters';
 
 // Canonical frontend risk mock model
 export const MOCK_RISK_FALLBACK = {
-  rawScore: 40,
-  score: 40,
-  level: 'Moderate',
+  rawScore: null,
+  score: null,
+  level: 'Unavailable',
   factors: [
-    { label: 'Wind', value: 75, status: 'High', color: 'bg-red-500' },
-    { label: 'Waves', value: 60, status: 'Moderate', color: 'bg-amber-500' },
-    { label: 'Lightning', value: 90, status: 'High', color: 'bg-red-600' },
-    { label: 'Cyclone', value: 30, status: 'Low', color: 'bg-amber-400' },
-    { label: 'Current', value: 50, status: 'Moderate', color: 'bg-amber-500' }
+    { label: 'Wind', value: 0, status: 'Unknown', color: 'bg-slate-500' },
+    { label: 'Waves', value: 0, status: 'Unknown', color: 'bg-slate-500' },
+    { label: 'Lightning', value: 0, status: 'Unknown', color: 'bg-slate-500' },
+    { label: 'Cyclone', value: 0, status: 'Unknown', color: 'bg-slate-500' },
+    { label: 'Current', value: 0, status: 'Unknown', color: 'bg-slate-500' }
   ],
   perFactorBreakdown: {
-    windRisk: 30,
-    waveRisk: 25,
-    rainRisk: 10,
-    lightningRisk: 35,
+    windRisk: 0,
+    waveRisk: 0,
+    rainRisk: 0,
+    lightningRisk: 0,
     cycloneRisk: 0
   },
-  confidenceScore: 0.92,
-  explainability: 'Risk is elevated primarily due to localized wind gusts and offshore lightning activity near Kakinada Bay.'
+  confidenceScore: 0,
+  explainability: 'Risk data is currently unavailable.'
 };
 
 /**

@@ -258,8 +258,8 @@ export default function SpatialIntelligenceMap({ pfzs, location: propLocation, i
           name: best.name || best.id || 'INCOIS PFZ',
           score: best.score ?? best.suitability ?? null,
           distanceKm: best.distanceKm ? Number(best.distanceKm).toFixed(1) : (Math.sqrt(best.distSq) * 111).toFixed(1),
-          sst: best.sst || 28.4,
-          chlorophyll: best.chlorophyll || 0.42
+          sst: best.sst ?? null,
+          chlorophyll: best.chlorophyll ?? null
         };
       }
     }
@@ -269,8 +269,8 @@ export default function SpatialIntelligenceMap({ pfzs, location: propLocation, i
       name: 'INCOIS-PFZ-01',
       score: null,
       distanceKm: '38.4',
-      sst: 28.5,
-      chlorophyll: 0.38
+      sst: null,
+      chlorophyll: null
     };
   }, [displayPfzs, centerLat, centerLon]);
 

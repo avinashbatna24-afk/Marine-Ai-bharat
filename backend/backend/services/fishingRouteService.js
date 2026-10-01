@@ -1,8 +1,8 @@
 const { createGeographicRoute } = require("./geoRoute");
 const { getMarineWarnings } = require("./marineWarningService");
 const { getBestFishingZones } = require("./pfzRecommendationService");
-const { getWeatherConditions } = require("./weatherService");
-const { getMarineConditions } = require("./marineDataService");
+const { getWeatherConditions, getWeatherForecast } = require("./weatherService");
+const { getMarineConditions, getMarineForecast } = require("./marineDataService");
 const { getCycloneStatus } = require("./cycloneService");
 const { planMarineRoute } = require("./marineRouteService");
 const { createGeographicRiskGrid } = require("./geographicRiskGrid");
@@ -11,6 +11,7 @@ const { checkGeofence } = require("./geofenceService");
 async function findBestFishingRoute({
   latitude,
   longitude,
+  targetDate = null,
   rows = 5,
   cols = 5,
   hazardCells = [],
@@ -57,11 +58,15 @@ async function findBestFishingRoute({
 
   const destination = pfzResult.recommendedZone;
 
-  // 2. Get live marine conditions.
-  const marineData = await getMarineConditions(latitude, longitude);
+  // 2. Get marine conditions.
+  const marineData = targetDate 
+    ? await getMarineForecast(latitude, longitude, targetDate) 
+    : await getMarineConditions(latitude, longitude);
 
-  // 3. Get live weather conditions.
-  const weatherData = await getWeatherConditions(latitude, longitude);
+  // 3. Get weather conditions.
+  const weatherData = targetDate
+    ? await getWeatherForecast(latitude, longitude, targetDate)
+    : await getWeatherConditions(latitude, longitude);
 
   // 4. Get official IMD marine warnings.
   const marineWarnings = await getMarineWarnings(latitude, longitude);
@@ -88,6 +93,8 @@ async function findBestFishingRoute({
     finalSafetyStatus = "DO_NOT_SAIL";
   } else if (marineWarnings.level === "MODERATE") {
     finalSafetyStatus = "CAUTION";
+  } else if (marineWarnings.level === "UNAVAILABLE" || cycloneStatus.status === "NOT_AVAILABLE") {
+    finalSafetyStatus = "UNKNOWN";
   }
 
   // 8. Convert geographic start/destination
@@ -118,32 +125,57 @@ async function findBestFishingRoute({
     hazardCells,
   });
 
-  // 10. Generate risk-aware route.
-  const routeResult = planMarineRoute({
-    rows,
-    cols,
-    start,
-    goal,
-    marineConditions,
-    hazardCells,
-    restrictedCells,
-    customRiskGrid: geographicRiskGrid.grid,
+  // 9.5 Enforce backend geofence restrictions into the pathfinder
+  const enforcedRestrictedCells = [...restrictedCells];
+  geographicRiskGrid.coordinates.forEach((row) => {
+    row.forEach((cell) => {
+      const gf = checkGeofence(cell.latitude, cell.longitude);
+      if (gf.insideRestrictedZone) {
+        enforcedRestrictedCells.push({ row: cell.row, col: cell.col });
+      }
+    });
   });
 
-  // 11. Convert grid route into geographic coordinates.
-  const geographicRoute = routeResult.success
-    ? createGeographicRoute({
-        route: routeResult.route,
-        start: {
-          latitude,
-          longitude,
-        },
-        destination: {
-          latitude: destination.latitude,
-          longitude: destination.longitude,
-        },
-      })
-    : [];
+  // 10. Generate risk-aware route (SKIP if DO_NOT_SAIL).
+  let routeResult = {
+    success: false,
+    route: [],
+    distance: null,
+    risk: geographicRiskGrid.risk,
+    totalRiskCost: null,
+    totalCost: null,
+    avoidedHazards: [],
+    explanation: `Route calculation blocked. DO NOT SAIL: Official IMD ${marineWarnings.level} warning is active.`
+  };
+  let geographicRoute = [];
+
+  if (finalSafetyStatus !== "DO_NOT_SAIL" && finalSafetyStatus !== "UNKNOWN") {
+    routeResult = planMarineRoute({
+      rows,
+      cols,
+      start,
+      goal,
+      marineConditions,
+      hazardCells,
+      restrictedCells: enforcedRestrictedCells,
+      customRiskGrid: geographicRiskGrid.grid,
+    });
+
+    // 11. Convert grid route into geographic coordinates.
+    geographicRoute = routeResult.success
+      ? createGeographicRoute({
+          route: routeResult.route,
+          start: {
+            latitude,
+            longitude,
+          },
+          destination: {
+            latitude: destination.latitude,
+            longitude: destination.longitude,
+          },
+        })
+      : [];
+  }
 
   // 12. Final response.
   return {
@@ -204,10 +236,12 @@ async function findBestFishingRoute({
 
     explanation:
       finalSafetyStatus === "DO_NOT_SAIL"
-        ? `Route calculated for visualization only. DO NOT SAIL: Official IMD ${marineWarnings.level} warning is active.`
-        : finalSafetyStatus === "CAUTION"
-          ? `Route optimized with marine risk awareness. CAUTION: Official IMD ${marineWarnings.level} warning is active.`
-          : routeResult.explanation || routeResult.message,
+        ? `Route calculation blocked. DO NOT SAIL: Official IMD ${marineWarnings.level} warning is active.`
+        : finalSafetyStatus === "UNKNOWN"
+          ? `Route calculation blocked. SAFETY UNKNOWN: Critical intelligence (IMD or Cyclone data) is unavailable.`
+          : finalSafetyStatus === "CAUTION"
+            ? `Route optimized with marine risk awareness. CAUTION: Official IMD ${marineWarnings.level} warning is active.`
+            : routeResult.explanation || routeResult.message,
 
     avoidedHazards: routeResult.avoidedHazards || [],
 
@@ -215,10 +249,10 @@ async function findBestFishingRoute({
 
     // Data provenance.
     dataQuality: {
-      marineData: "LIVE",
-      weatherData: "LIVE",
-      wind: "LIVE",
-      rainProbability: "LIVE",
+      marineData: targetDate ? "FORECAST" : "LIVE",
+      weatherData: targetDate ? "FORECAST" : "LIVE",
+      wind: targetDate ? "FORECAST" : "LIVE",
+      rainProbability: targetDate ? "FORECAST" : "LIVE",
 
       // Lightning is obtained from IMD.
       lightning: "LIVE_IMD",

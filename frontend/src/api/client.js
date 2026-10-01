@@ -123,9 +123,11 @@ export async function withFallback(apiCallFn, fallbackData, serviceName = 'Servi
     };
 
     return {
-      data: fallbackData,
-      source: 'fallback',
+      data: Array.isArray(fallbackData) ? [] : null,
+      source: 'unavailable',
       isFallback: true,
+      success: false,
+      reason: 'LIVE_DATA_UNAVAILABLE',
       error: safeError
     };
   }

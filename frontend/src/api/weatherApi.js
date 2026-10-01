@@ -11,51 +11,36 @@ import { adaptTelemetry } from './adapters';
 
 // Existing frontend mock data fixtures for fallback
 const MOCK_WEATHER_FALLBACK = {
-  windSpeed: 14,
-  windGust: 18,
-  windDirection: 'NE',
-  precipitation: 0,
-  weatherCode: 0,
-  visibility: 10,
-  source: 'fallback'
+  windSpeed: null,
+  windGust: null,
+  windDirection: null,
+  precipitation: null,
+  weatherCode: null,
+  visibility: null,
+  source: 'unavailable'
 };
 
 const MOCK_OCEAN_FALLBACK = {
-  waveHeight: 1.2,
-  wavePeriod: 6.5,
-  sst: 28.4,
-  chlorophyll: 2.8,
-  currentSpeed: 0.6,
-  currentDirection: 'NE',
-  source: 'fallback'
+  waveHeight: null,
+  wavePeriod: null,
+  sst: null,
+  chlorophyll: null,
+  currentSpeed: null,
+  currentDirection: null,
+  source: 'unavailable'
 };
 
-const MOCK_FORECAST_FALLBACK = [
-  { time: '06:00', windSpeed: 12, waveHeight: 1.0, rainProb: 10 },
-  { time: '09:00', windSpeed: 14, waveHeight: 1.2, rainProb: 15 },
-  { time: '12:00', windSpeed: 16, waveHeight: 1.4, rainProb: 20 },
-  { time: '15:00', windSpeed: 18, waveHeight: 1.6, rainProb: 30 },
-  { time: '18:00', windSpeed: 15, waveHeight: 1.3, rainProb: 25 },
-  { time: '21:00', windSpeed: 13, waveHeight: 1.1, rainProb: 15 }
-];
+const MOCK_FORECAST_FALLBACK = [];
 
 const MOCK_WARNINGS_FALLBACK = {
-  count: 1,
-  warnings: [
-    {
-      id: 'warn-1',
-      title: 'IMD Advisory: Moderate Sea Conditions',
-      severity: 'Moderate',
-      description: 'Sustained winds 14-18 kt with waves up to 1.5m off Andhra coast.',
-      area: 'Kakinada Offshore Sector'
-    }
-  ]
+  count: 0,
+  warnings: []
 };
 
 const MOCK_SST_FALLBACK = {
-  averageSst: 28.4,
+  averageSst: null,
   unit: '°C',
-  source: 'INCOIS ERDDAP (Fallback)'
+  source: 'UNAVAILABLE'
 };
 
 /**

@@ -12,15 +12,15 @@ export default function WeatherOceanCards() {
         </div>
 
         <div>
-          <div className="font-extrabold text-2xl text-[#0F172A] tracking-tight">29°C</div>
+          <div className="font-extrabold text-2xl text-[#0F172A] tracking-tight">--</div>
           <div className="space-y-1 mt-2 text-xs text-slate-600">
             <div className="flex justify-between">
               <span className="text-slate-400">Wind</span>
-              <span className="font-mono font-medium text-slate-800">18 km/h SE</span>
+              <span className="font-mono font-medium text-slate-800">--</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Rain</span>
-              <span className="font-mono font-medium text-slate-800">30%</span>
+              <span className="font-mono font-medium text-slate-800">--</span>
             </div>
           </div>
         </div>
@@ -34,15 +34,15 @@ export default function WeatherOceanCards() {
         </div>
 
         <div>
-          <div className="font-extrabold text-xl text-[#0F172A] tracking-tight">1.4m <span className="text-sm font-normal text-slate-500">Wave</span></div>
+          <div className="font-extrabold text-xl text-[#0F172A] tracking-tight">-- <span className="text-sm font-normal text-slate-500">Wave</span></div>
           <div className="space-y-1 mt-2 text-xs text-slate-600">
             <div className="flex justify-between">
               <span className="text-slate-400">SST</span>
-              <span className="font-mono font-medium text-slate-800">28.4°C</span>
+              <span className="font-mono font-medium text-slate-800">--</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Chl-a</span>
-              <span className="font-mono font-medium text-slate-800">1.7 mg/m³</span>
+              <span className="font-mono font-medium text-slate-800">--</span>
             </div>
           </div>
         </div>

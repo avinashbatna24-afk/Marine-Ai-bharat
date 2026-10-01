@@ -32,7 +32,7 @@ export default function MarineIntelligenceHUD({ onGeneratePrediction }) {
                 <Wind className="w-3 h-3 text-[#1363DF]" /> Wind
               </span>
               <div className="font-mono font-bold text-[#0F172A] text-sm">
-                18 <span className="text-[10px] font-normal text-slate-500">km/h</span>
+                -- <span className="text-[10px] font-normal text-slate-500">km/h</span>
               </div>
             </div>
 
@@ -41,7 +41,7 @@ export default function MarineIntelligenceHUD({ onGeneratePrediction }) {
                 <Waves className="w-3 h-3 text-[#00B4D8]" /> Wave
               </span>
               <div className="font-mono font-bold text-[#0F172A] text-sm">
-                1.4 <span className="text-[10px] font-normal text-slate-500">m</span>
+                -- <span className="text-[10px] font-normal text-slate-500">m</span>
               </div>
             </div>
 
@@ -50,7 +50,7 @@ export default function MarineIntelligenceHUD({ onGeneratePrediction }) {
                 <Thermometer className="w-3 h-3 text-amber-500" /> SST
               </span>
               <div className="font-mono font-bold text-[#0F172A] text-sm">
-                28.4 <span className="text-[10px] font-normal text-slate-500">°C</span>
+                -- <span className="text-[10px] font-normal text-slate-500">°C</span>
               </div>
             </div>
 
@@ -59,7 +59,7 @@ export default function MarineIntelligenceHUD({ onGeneratePrediction }) {
                 <Activity className="w-3 h-3 text-emerald-600" /> Chl
               </span>
               <div className="font-mono font-bold text-[#0F172A] text-sm">
-                2.8 <span className="text-[10px] font-normal text-slate-500">mg/m³</span>
+                -- <span className="text-[10px] font-normal text-slate-500">mg/m³</span>
               </div>
             </div>
           </div>

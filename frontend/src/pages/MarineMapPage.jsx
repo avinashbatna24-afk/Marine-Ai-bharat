@@ -90,22 +90,14 @@ export default function MarineMapPage() {
           lat: best.lat,
           lon: best.lon,
           name: best.name || best.id || 'INCOIS PFZ Ground',
-          score: best.score || best.confidence || best.suitability || 85,
+          score: best.score || best.confidence || best.suitability || null,
           distanceKm: best.distanceKm ? Number(best.distanceKm).toFixed(1) : (Math.sqrt(best.distSq) * 111).toFixed(1),
-          sst: best.sst || 28.2,
-          chlorophyll: best.chlorophyll || 0.40
+          sst: best.sst ?? null,
+          chlorophyll: best.chlorophyll ?? null
         };
       }
     }
-    return {
-      lat: centerLat - 0.16,
-      lon: centerLon + 0.28,
-      name: 'INCOIS-PFZ-01',
-      score: 85,
-      distanceKm: '34.2',
-      sst: 28.4,
-      chlorophyll: 0.38
-    };
+    return null;
   }, [displayPfzs, centerLat, centerLon]);
 
   // Departure Marker Icon
@@ -326,7 +318,7 @@ export default function MarineMapPage() {
           </Marker>
 
           {/* Designated INCOIS PFZ Destination Marker */}
-          {targetPfz.lat && targetPfz.lon && (
+          {targetPfz && targetPfz.lat && targetPfz.lon && (
             <Marker position={[targetPfz.lat, targetPfz.lon]} icon={destinationIcon}>
               <Tooltip permanent direction="top" offset={[0, -16]} className="map-station-tooltip">
                 <span className="font-bold text-[10px] text-emerald-950 bg-white/95 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 border border-emerald-500/50">
@@ -343,7 +335,7 @@ export default function MarineMapPage() {
                     {targetPfz.lat.toFixed(4)}° N, {targetPfz.lon.toFixed(4)}° E
                   </p>
                   <p className="text-[11px] text-emerald-600 font-bold mt-1">
-                    Catch Suitability: {targetPfz.score}%
+                    Catch Suitability: {targetPfz.score != null ? `${targetPfz.score}%` : 'Unavailable'}
                   </p>
                   <p className="text-[10px] text-slate-500 font-sans mt-0.5">
                     Est. Distance: ~{targetPfz.distanceKm} km from {selectedLocation?.name}
@@ -359,7 +351,7 @@ export default function MarineMapPage() {
             const lon = pfz.longitude || pfz.lon;
             if (!lat || !lon) return null;
             const score = pfz.score || pfz.confidence || null;
-            const isDestination = pfz.name === targetPfz.name || pfz.id === targetPfz.name;
+            const isDestination = targetPfz && (pfz.name === targetPfz.name || pfz.id === targetPfz.name);
             const badgeLabel = score != null ? `${score}%` : (pfz.sector ? `Sec ${pfz.sector}` : 'PFZ');
 
             return (
@@ -387,9 +379,9 @@ export default function MarineMapPage() {
                     <div className="text-[10px] text-slate-400 font-mono">
                       {lat.toFixed(4)}° N, {lon.toFixed(4)}° E
                     </div>
-                    {pfz.sst && (
+                    {pfz.sst != null && (
                       <div className="text-[10px] text-cyan-300">
-                        SST: {pfz.sst}°C | Chl: {pfz.chlorophyll || 0.4} mg/m³
+                        SST: {pfz.sst}°C | Chl: {pfz.chlorophyll != null ? `${pfz.chlorophyll} mg/m³` : 'Unavailable'}
                       </div>
                     )}
                   </div>
@@ -409,7 +401,7 @@ export default function MarineMapPage() {
                       )}
                       <div className="flex justify-between">
                         <span>Suitability:</span>
-                        <span className="font-bold text-[#22C55E]">{pfz.score || 85}%</span>
+                        <span className="font-bold text-[#22C55E]">{pfz.score != null ? `${pfz.score}%` : 'Unavailable'}</span>
                       </div>
                     </div>
 

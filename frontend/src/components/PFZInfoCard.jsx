@@ -25,7 +25,7 @@ export default function PFZInfoCard({ nearestPfz, userLocation, onResetLocation 
         <div className="bg-slate-900/90 backdrop-blur-md text-white p-5 rounded-2xl shadow-2xl border border-teal-500/30 w-full">
             <div className="flex items-center justify-between mb-3">
                 <span className={`font-semibold px-3 py-1 rounded-full text-xs border ${categoryBadge.color}`}>
-                    {categoryBadge.text} (Score: {nearestPfz.pfz_score || 90}/100)
+                    {categoryBadge.text} (Score: {nearestPfz.pfz_score != null ? nearestPfz.pfz_score : '--'}/100)
                 </span>
                 <span className="text-xs text-slate-400 font-mono">
                     ID: {nearestPfz.id}
@@ -52,15 +52,15 @@ export default function PFZInfoCard({ nearestPfz, userLocation, onResetLocation 
             <div className="grid grid-cols-2 gap-2 text-xs bg-slate-800/50 p-3 rounded-xl border border-slate-700/60 mb-3">
                 <div>
                     <span className="text-slate-400 block text-[10px]">SST Temp:</span>
-                    <span className="font-semibold text-rose-400">{nearestPfz.sst}°C</span>
+                    <span className="font-semibold text-rose-400">{nearestPfz.sst != null ? nearestPfz.sst : '--'}°C</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[10px]">Chlorophyll:</span>
-                    <span className="font-semibold text-emerald-400">{nearestPfz.chlorophyll} mg/m³</span>
+                    <span className="font-semibold text-emerald-400">{nearestPfz.chlorophyll != null ? nearestPfz.chlorophyll : '--'} mg/m³</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[10px]">Ocean Depth:</span>
-                    <span className="font-semibold text-blue-400">{nearestPfz.depth || 35} m</span>
+                    <span className="font-semibold text-blue-400">{nearestPfz.depth != null ? nearestPfz.depth : '--'} m</span>
                 </div>
                 <div>
                     <span className="text-slate-400 block text-[10px]">Confidence:</span>

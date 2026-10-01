@@ -65,22 +65,10 @@ export default function PFZExplorerPage() {
   }, [activeLat, activeLon, refreshTrigger]);
 
   const pfzList = pfzState.data || [];
-  const selectedPfz = pfzList[0] || {
-    id: 'PFZ-03',
-    name: 'PFZ-03',
-    latitude: activeLat + 0.18,
-    longitude: activeLon + 0.22,
-    score: 92,
-    tier: 'VERY_HIGH',
-    distanceKm: 18.4,
-    depth: 65,
-    sst: 28.4,
-    chlorophyll: 2.8,
-    validUntil: 'Today 18:00 IST'
-  };
+  const selectedPfz = pfzList[0] || null;
 
   const startCoords = [activeLat, activeLon];
-  const tierBadgeLabel = selectedPfz.score != null
+  const tierBadgeLabel = selectedPfz && selectedPfz.score != null
     ? (selectedPfz.score >= 80 ? 'High Confidence' : selectedPfz.score >= 60 ? 'Moderate Confidence' : 'Low Confidence')
     : (t('confidence_not_available') || 'Confidence: Not available');
 
@@ -101,7 +89,7 @@ export default function PFZExplorerPage() {
     iconAnchor: [12, 12]
   }), []);
 
-  // Custom DivIcon for PFZ Target Marker (Admiralty Safe Teal #3E7C6B)
+    // Custom DivIcon for PFZ Target Marker (Admiralty Safe Teal #3E7C6B)
   const pfzTargetMarkerIcon = useMemo(() => L.divIcon({
     className: 'pfz-target-marker',
     html: `
@@ -123,7 +111,18 @@ export default function PFZExplorerPage() {
     iconAnchor: [14, 14]
   }), []);
 
-  const pfzCoords = [Number(selectedPfz.latitude) || (activeLat + 0.18), Number(selectedPfz.longitude) || (activeLon + 0.22)];
+  if (!selectedPfz && !isLoading) {
+    return (
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 text-[#D8D2C2]">
+        <div className="bg-[#132C40] p-5 rounded-2xl border border-[#1E3F5A] shadow-card text-center">
+          <h2 className="text-xl font-bold">No PFZs Available</h2>
+          <p className="text-[#8EA5B5] mt-2">Could not retrieve potential fishing zones for this area.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const pfzCoords = selectedPfz ? [Number(selectedPfz.latitude) || (activeLat + 0.18), Number(selectedPfz.longitude) || (activeLon + 0.22)] : startCoords;
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-6 pb-12 text-[#D8D2C2]">
@@ -132,7 +131,7 @@ export default function PFZExplorerPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="font-sans font-extrabold text-2xl md:text-3xl text-[#D8D2C2] tracking-tight">
-              {isLoading ? 'Loading PFZ...' : (selectedPfz.id || selectedPfz.name)}
+              {isLoading ? 'Loading PFZ...' : (selectedPfz?.id || selectedPfz?.name)}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#3E7C6B]/20 text-[#3E7C6B] border border-[#3E7C6B]/40">
               {tierBadgeLabel}
@@ -239,13 +238,13 @@ export default function PFZExplorerPage() {
 
               {/* DISTANCE BADGE OVERLAY ON MAP LINE */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[400] bg-[#0B1E2D]/90 backdrop-blur-md border border-[#C9A961]/50 text-[#C9A961] font-mono text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                {selectedPfz.distanceKm || 18.4} km
+                {selectedPfz?.distanceKm || '--'} km
               </div>
 
               {/* TARGET PFZ BADGE OVERLAY ON MAP */}
               <div className="absolute top-12 right-12 z-[400] bg-[#0B1E2D]/90 border border-[#3E7C6B]/60 text-[#D8D2C2] p-2.5 rounded-xl text-center shadow-lg">
-                <p className="font-bold text-xs text-[#D8D2C2]">{selectedPfz.id || 'PFZ'}</p>
-                <p className="font-mono text-xs font-extrabold text-[#3E7C6B]">{selectedPfz.score}%</p>
+                <p className="font-bold text-xs text-[#D8D2C2]">{selectedPfz?.id || 'PFZ'}</p>
+                <p className="font-mono text-xs font-extrabold text-[#3E7C6B]">{selectedPfz?.score || '--'}%</p>
               </div>
 
               {/* ZOOM CONTROLS */}
@@ -270,10 +269,10 @@ export default function PFZExplorerPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-8 bg-[#132C40] rounded-2xl border border-[#1E3F5A] p-5 shadow-card space-y-2">
               <h3 className="font-bold text-xs text-[#D8D2C2] uppercase tracking-wider font-mono">
-                About {selectedPfz.name || selectedPfz.id}
+                About {selectedPfz?.name || selectedPfz?.id || 'PFZ'}
               </h3>
               <p className="text-xs text-[#8EA5B5] leading-relaxed">
-                This PFZ has high productivity potential based on oceanographic parameters (SST: {selectedPfz.sst}°C, Chlorophyll: {selectedPfz.chlorophyll} mg/m³). It is highly recommended for fishing operations.
+                This PFZ has high productivity potential based on oceanographic parameters (SST: {selectedPfz?.sst || '--'}°C, Chlorophyll: {selectedPfz?.chlorophyll || '--'} mg/m³). It is highly recommended for fishing operations.
               </p>
             </div>
 
@@ -349,7 +348,7 @@ export default function PFZExplorerPage() {
                   <Thermometer className="w-4 h-4 text-[#B8543C]" />
                   <span>SST</span>
                 </div>
-                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">{selectedPfz.sst || 28.4} <span className="text-xs font-normal text-[#8EA5B5]">°C</span></p>
+                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">{selectedPfz?.sst || '--'} <span className="text-xs font-normal text-[#8EA5B5]">°C</span></p>
                 <span className="text-[11px] font-semibold text-[#3E7C6B] bg-[#3E7C6B]/15 px-2 py-0.5 rounded inline-block">Favorable</span>
               </div>
 
@@ -359,7 +358,7 @@ export default function PFZExplorerPage() {
                   <Leaf className="w-4 h-4 text-[#3E7C6B]" />
                   <span>Chlorophyll</span>
                 </div>
-                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">{selectedPfz.chlorophyll || 2.8} <span className="text-xs font-normal text-[#8EA5B5]">mg/m³</span></p>
+                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">{selectedPfz?.chlorophyll || '--'} <span className="text-xs font-normal text-[#8EA5B5]">mg/m³</span></p>
                 <span className="text-[11px] font-semibold text-[#3E7C6B] bg-[#3E7C6B]/15 px-2 py-0.5 rounded inline-block">High Density</span>
               </div>
 
@@ -369,8 +368,8 @@ export default function PFZExplorerPage() {
                   <Wind className="w-4 h-4 text-[#C9A961]" />
                   <span>Wind Speed</span>
                 </div>
-                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">14 <span className="text-xs font-normal text-[#8EA5B5]">kt NE</span></p>
-                <span className="text-[11px] font-semibold text-[#C9A961] bg-[#C9A961]/15 px-2 py-0.5 rounded inline-block">Moderate</span>
+                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">-- <span className="text-xs font-normal text-[#8EA5B5]">kt</span></p>
+                <span className="text-[11px] font-semibold text-[#C9A961] bg-[#C9A961]/15 px-2 py-0.5 rounded inline-block">Unknown</span>
               </div>
 
               {/* ENLARGED OUTPUT BOX: Wave */}
@@ -379,8 +378,8 @@ export default function PFZExplorerPage() {
                   <Waves className="w-4 h-4 text-[#C9A961]" />
                   <span>Wave Height</span>
                 </div>
-                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">1.2 <span className="text-xs font-normal text-[#8EA5B5]">m</span></p>
-                <span className="text-[11px] font-semibold text-[#C9A961] bg-[#C9A961]/15 px-2 py-0.5 rounded inline-block">Moderate</span>
+                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">-- <span className="text-xs font-normal text-[#8EA5B5]">m</span></p>
+                <span className="text-[11px] font-semibold text-[#C9A961] bg-[#C9A961]/15 px-2 py-0.5 rounded inline-block">Unknown</span>
               </div>
 
               {/* ENLARGED OUTPUT BOX: Currents */}
@@ -389,8 +388,8 @@ export default function PFZExplorerPage() {
                   <RefreshCw className="w-4 h-4 text-[#C9A961]" />
                   <span>Currents</span>
                 </div>
-                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">0.6 <span className="text-xs font-normal text-[#8EA5B5]">m/s NE</span></p>
-                <span className="text-[11px] font-semibold text-[#C9A961] bg-[#C9A961]/15 px-2 py-0.5 rounded inline-block">Moderate</span>
+                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">-- <span className="text-xs font-normal text-[#8EA5B5]">m/s</span></p>
+                <span className="text-[11px] font-semibold text-[#C9A961] bg-[#C9A961]/15 px-2 py-0.5 rounded inline-block">Unknown</span>
               </div>
 
               {/* ENLARGED OUTPUT BOX: Visibility */}
@@ -399,8 +398,8 @@ export default function PFZExplorerPage() {
                   <Eye className="w-4 h-4 text-[#3E7C6B]" />
                   <span>Visibility</span>
                 </div>
-                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">10 <span className="text-xs font-normal text-[#8EA5B5]">km</span></p>
-                <span className="text-[11px] font-semibold text-[#3E7C6B] bg-[#3E7C6B]/15 px-2 py-0.5 rounded inline-block">Good</span>
+                <p className="font-mono font-extrabold text-xl text-[#D8D2C2]">-- <span className="text-xs font-normal text-[#8EA5B5]">km</span></p>
+                <span className="text-[11px] font-semibold text-[#3E7C6B] bg-[#3E7C6B]/15 px-2 py-0.5 rounded inline-block">Unknown</span>
               </div>
             </div>
           </div>
@@ -414,20 +413,23 @@ export default function PFZExplorerPage() {
               <div className="flex items-center justify-between">
                 <span className="text-[#8EA5B5]">Confidence Score</span>
                 <span className="font-bold text-[#3E7C6B]">
-                  {selectedPfz.score != null ? `${selectedPfz.score}%` : (t('confidence_not_available') || 'Confidence: Not available')}
+                  {selectedPfz?.score != null ? `${selectedPfz.score}%` : (t('confidence_not_available') || 'Confidence: Not available')}
                 </span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1E3F5A] pt-2">
                 <span className="text-[#8EA5B5]">Distance from vessel</span>
-                <span className="font-bold text-[#D8D2C2]">{selectedPfz.distanceKm || 18.4} km</span>
+                <span className="font-bold text-[#D8D2C2]">{selectedPfz?.distanceKm || '--'} km</span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1E3F5A] pt-2">
                 <span className="text-[#8EA5B5]">Target Coordinates</span>
-                <span className="font-bold text-[#C9A961]">{Number(selectedPfz.latitude).toFixed(4)}° N, {Number(selectedPfz.longitude).toFixed(4)}° E</span>
+                <span className="font-bold text-[#C9A961]">
+                  {selectedPfz?.latitude != null ? Number(selectedPfz.latitude).toFixed(4) : '--'}° N, 
+                  {selectedPfz?.longitude != null ? Number(selectedPfz.longitude).toFixed(4) : '--'}° E
+                </span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1E3F5A] pt-2">
                 <span className="text-[#8EA5B5]">Depth</span>
-                <span className="font-bold text-[#D8D2C2]">{selectedPfz.depth || 65} m</span>
+                <span className="font-bold text-[#D8D2C2]">{selectedPfz?.depth || '--'} m</span>
               </div>
             </div>
           </div>

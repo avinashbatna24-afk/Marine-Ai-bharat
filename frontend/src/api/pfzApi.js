@@ -21,8 +21,8 @@ const MOCK_PFZ_FALLBACK = [
     tier: 'HIGH',
     distanceKm: 31.8,
     depth: 42,
-    sst: 28.4,
-    chlorophyll: 2.8,
+    sst: null,
+    chlorophyll: null,
     bearing: 'SE',
     validUntil: 'Today 18:00 IST',
     source: 'INCOIS'
@@ -37,8 +37,8 @@ const MOCK_PFZ_FALLBACK = [
     tier: 'VERY_HIGH',
     distanceKm: 24.5,
     depth: 58,
-    sst: 28.1,
-    chlorophyll: 3.4,
+    sst: null,
+    chlorophyll: null,
     bearing: 'E',
     validUntil: 'Today 18:00 IST',
     source: 'INCOIS'
@@ -53,8 +53,8 @@ const MOCK_PFZ_FALLBACK = [
     tier: 'MODERATE',
     distanceKm: 42.1,
     depth: 35,
-    sst: 28.7,
-    chlorophyll: 2.1,
+    sst: null,
+    chlorophyll: null,
     bearing: 'S',
     validUntil: 'Today 18:00 IST',
     source: 'INCOIS'

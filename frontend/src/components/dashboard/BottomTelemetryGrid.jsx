@@ -5,27 +5,27 @@ import { useNavigate } from 'react-router-dom';
 export default function BottomTelemetryGrid({ telemetry, alertsCount, isFallback, isLoading }) {
   const navigate = useNavigate();
 
-  const windSpeed = telemetry?.wind?.speed ?? 14;
-  const windDir = telemetry?.wind?.direction || 'NE';
-  const windLabel = telemetry?.wind?.label || 'Moderate';
+  const windSpeed = telemetry?.wind?.speed ?? '--';
+  const windDir = telemetry?.wind?.direction || 'Unknown';
+  const windLabel = telemetry?.wind?.label || 'Unknown';
 
-  const waveHeight = telemetry?.waves?.height ?? 1.2;
-  const waveLabel = telemetry?.waves?.label || 'Moderate';
+  const waveHeight = telemetry?.waves?.height ?? '--';
+  const waveLabel = telemetry?.waves?.label || 'Unknown';
 
-  const sstValue = telemetry?.sst?.value ?? 28.4;
-  const sstLabel = telemetry?.sst?.label || 'Normal';
+  const sstValue = telemetry?.sst?.value ?? '--';
+  const sstLabel = telemetry?.sst?.label || 'Unknown';
 
-  const chlaValue = telemetry?.chlorophyll?.value ?? 2.8;
-  const chlaLabel = telemetry?.chlorophyll?.label || 'High';
+  const chlaValue = telemetry?.chlorophyll?.value ?? '--';
+  const chlaLabel = telemetry?.chlorophyll?.label || 'Unknown';
 
-  const currentSpeed = telemetry?.current?.speed ?? 0.6;
-  const currentDir = telemetry?.current?.direction || 'NE';
-  const currentLabel = telemetry?.current?.label || 'Moderate';
+  const currentSpeed = telemetry?.current?.speed ?? '--';
+  const currentDir = telemetry?.current?.direction || 'Unknown';
+  const currentLabel = telemetry?.current?.label || 'Unknown';
 
-  const visValue = telemetry?.visibility?.value ?? 10;
-  const visLabel = telemetry?.visibility?.label || 'Good';
+  const visValue = telemetry?.visibility?.value ?? '--';
+  const visLabel = telemetry?.visibility?.label || 'Unknown';
 
-  const countAlerts = alertsCount ?? 2;
+  const countAlerts = alertsCount ?? 0;
 
   return (
     <div className="space-y-1.5 text-[#D8D2C2]">

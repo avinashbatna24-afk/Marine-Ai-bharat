@@ -198,14 +198,13 @@ async function fetchChlorophyll(latitude, longitude) {
 
   const hasRasterio = await isRasterioAvailable();
   if (!hasRasterio) {
-    const pseudoChl = 2.4 + ((Math.sin(lat * 10) + Math.cos(lon * 10)) * 0.4);
     return {
-      chlorophyll: Number(pseudoChl.toFixed(4)),
+      chlorophyll: null,
       unit: "mg/m³",
       latitude: lat,
       longitude: lon,
-      source: "INCOIS PFZ CHL Satellite (Estimated)",
-      status: "LIVE_ESTIMATE",
+      source: "INCOIS PFZ CHL Satellite",
+      status: "UNAVAILABLE",
       timestamp: new Date().toISOString(),
     };
   }

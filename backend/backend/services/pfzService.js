@@ -611,42 +611,42 @@ async function rankPFZs(latitude, longitude, limit = 5) {
       chlorophyll: {
         points: Number(chlPoints.toFixed(2)),
         maxPoints: 45,
-        value: Number.isFinite(chlorophyll) ? `${chlorophyll.toFixed(4)} mg/m³` : null,
+        value: (pfz.chlorophyll !== null && pfz.chlorophyll !== undefined && Number.isFinite(chlorophyll)) ? `${chlorophyll.toFixed(4)} mg/m³` : null,
         status: pfz.chlorophyllStatus || "UNAVAILABLE",
-        detail: Number.isFinite(chlorophyll) ? `Chlorophyll concentration ${chlorophyll.toFixed(4)} mg/m³` : "Chlorophyll data unavailable",
+        detail: (pfz.chlorophyll !== null && pfz.chlorophyll !== undefined && Number.isFinite(chlorophyll)) ? `Chlorophyll concentration ${chlorophyll.toFixed(4)} mg/m³` : "Chlorophyll data unavailable",
       },
       distance: {
         points: Number(distPoints.toFixed(2)),
         maxPoints: 25,
-        value: Number.isFinite(distance) ? `${distance.toFixed(2)} km` : null,
+        value: (pfz.distanceKm !== null && pfz.distanceKm !== undefined && Number.isFinite(distance)) ? `${distance.toFixed(2)} km` : null,
         status: "LIVE",
-        detail: Number.isFinite(distance) ? `Distance ${distance.toFixed(2)} km from vessel` : "Distance unavailable",
+        detail: (pfz.distanceKm !== null && pfz.distanceKm !== undefined && Number.isFinite(distance)) ? `Distance ${distance.toFixed(2)} km from vessel` : "Distance unavailable",
       },
       sst: {
         points: Number(sstPoints.toFixed(2)),
         maxPoints: 20,
-        value: Number.isFinite(sst) ? `${sst.toFixed(2)}°C` : null,
+        value: (pfz.sst !== null && pfz.sst !== undefined && Number.isFinite(sst)) ? `${sst.toFixed(2)}°C` : null,
         status: pfz.sstStatus || "UNAVAILABLE",
-        detail: Number.isFinite(sst) ? `Sea surface temperature ${sst.toFixed(2)}°C` : "SST data unavailable",
+        detail: (pfz.sst !== null && pfz.sst !== undefined && Number.isFinite(sst)) ? `Sea surface temperature ${sst.toFixed(2)}°C` : "SST data unavailable",
       },
       officialScore: {
         points: Number(officialPoints.toFixed(2)),
         maxPoints: 10,
-        value: Number.isFinite(officialPFZScore) ? officialPFZScore : null,
+        value: (pfz.pfz_score !== null && pfz.pfz_score !== undefined && Number.isFinite(officialPFZScore)) ? officialPFZScore : null,
         status: pfz.sourceStatus || "PROTOTYPE",
-        detail: Number.isFinite(officialPFZScore) ? `INCOIS score ${officialPFZScore}` : "Official INCOIS score unavailable",
+        detail: (pfz.pfz_score !== null && pfz.pfz_score !== undefined && Number.isFinite(officialPFZScore)) ? `INCOIS score ${officialPFZScore}` : "Official INCOIS score unavailable",
       },
     };
 
     // Selection explanation items
     const selectionExplanation = [];
-    if (Number.isFinite(distance)) {
+    if (pfz.distanceKm !== null && pfz.distanceKm !== undefined && Number.isFinite(distance)) {
       selectionExplanation.push(`✓ Close: ${distance.toFixed(2)} km`);
     }
-    if (Number.isFinite(chlorophyll)) {
+    if (pfz.chlorophyll !== null && pfz.chlorophyll !== undefined && Number.isFinite(chlorophyll)) {
       selectionExplanation.push(`✓ Chlorophyll: ${chlorophyll.toFixed(4)} mg/m³`);
     }
-    if (Number.isFinite(sst)) {
+    if (pfz.sst !== null && pfz.sst !== undefined && Number.isFinite(sst)) {
       selectionExplanation.push(`✓ SST: ${sst.toFixed(2)}°C`);
     }
     if (pfz.sourceStatus === "LIVE" || pfz.source === "INCOIS") {

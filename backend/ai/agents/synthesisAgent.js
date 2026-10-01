@@ -51,6 +51,10 @@ function applySafetyOverride(recommendation, toolResults = {}) {
     return "DO_NOT_SAIL";
   }
 
+  if (marine?.safety?.status === "UNKNOWN" || marine?.decision?.status === "UNKNOWN") {
+    return "UNKNOWN_VERIFY_LOCALLY";
+  }
+
   // Any detected hazard explicitly requiring DO_NOT_SAIL
   if (
     hazards.some(
@@ -314,6 +318,17 @@ function enforceSafetyAnswer(
     return `Proceed only with caution. Detected conditions include: ${hazardText}. Check the latest weather and official marine warnings before entering the sea.`;
   }
 
+  // ==================================================
+  // UNKNOWN
+  // ==================================================
+
+  if (recommendation === "UNKNOWN_VERIFY_LOCALLY" || recommendation === "UNKNOWN") {
+    if (lang === "te") {
+      return "అధికారిక వాతావరణ హెచ్చరికలు లేదా తుఫాను సమాచారం ప్రస్తుతం అందుబాటులో లేదు. కాబట్టి సముద్ర భద్రతను నిర్ధారించలేము. దయచేసి స్థానిక అధికారులను సంప్రదించండి.";
+    }
+    return "Official marine warnings or cyclone information are currently UNAVAILABLE. Therefore, marine safety cannot be confirmed. Please verify with local port authorities before sailing.";
+  }
+
   return answer;
 }
 
@@ -392,11 +407,11 @@ function fallbackSynthesizeResponse(
       (toolResults?.rankPFZs?.data?.pfzs && toolResults.rankPFZs.data.pfzs[0]) ||
       (context?.pfzList && context.pfzList[0]);
 
-    const name = activePFZ?.name || activePFZ?.id || "INCOIS PFZ 041";
-    const score = activePFZ?.aiSuitabilityScore || 94;
-    const chl = activePFZ?.chlorophyll ? `${Number(activePFZ.chlorophyll).toFixed(2)} mg/m³` : "2.85 mg/m³";
-    const sst = activePFZ?.sst ? `${Number(activePFZ.sst).toFixed(1)}°C` : "26.8°C";
-    const dist = activePFZ?.distanceKm ? `${Number(activePFZ.distanceKm).toFixed(1)} km` : "28 km";
+    const name = activePFZ?.name || activePFZ?.id || "PFZ";
+    const score = activePFZ?.aiSuitabilityScore || "unavailable";
+    const chl = activePFZ?.chlorophyll ? `${Number(activePFZ.chlorophyll).toFixed(2)} mg/m³` : "unavailable";
+    const sst = activePFZ?.sst ? `${Number(activePFZ.sst).toFixed(1)}°C` : "unavailable";
+    const dist = activePFZ?.distanceKm ? `${Number(activePFZ.distanceKm).toFixed(1)} km` : "unavailable";
 
     recommendation = "INFORMATIONAL";
     parametersUsed.push("Chlorophyll Concentration", "Sea Surface Temperature", "Accessibility Distance", "AI Suitability Score");

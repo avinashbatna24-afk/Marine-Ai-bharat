@@ -95,7 +95,23 @@ async function getMarineWarnings(latitude, longitude, targetDateStr = null) {
   try {
     html = await fetchText(IMD_WARNING_URL);
   } catch (e) {
-    console.warn("[IMD Warning Service] Warning fetch fallback:", e.message);
+    console.warn("[IMD Warning Service] Warning fetch failed:", e.message);
+    return {
+      source: "India Meteorological Department",
+      sourceUrl: IMD_WARNING_URL,
+      region: "Coastal Andhra Pradesh",
+      latitude: lat,
+      longitude: lon,
+      level: "UNAVAILABLE",
+      warning: null,
+      isWatch: null,
+      advisoryText: "IMD Marine Warning service is temporarily unavailable.",
+      factors: [],
+      lightningWarning: null,
+      strongWindWarning: null,
+      squallWarning: null,
+      checkedAt: new Date().toISOString()
+    };
   }
 
   const rows = parseImdRows(html);
@@ -117,8 +133,27 @@ async function getMarineWarnings(latitude, longitude, targetDateStr = null) {
     selectedRow = rows.find(r => r.text.startsWith("Day 1")) || rows[0];
   }
 
-  const color = selectedRow?.color || "#FFFF00";
-  const rowText = selectedRow?.text || "Coastal Andhra Pradesh Weather Watch";
+  if (!selectedRow) {
+    return {
+      source: "India Meteorological Department",
+      sourceUrl: IMD_WARNING_URL,
+      region: "Coastal Andhra Pradesh",
+      latitude: lat,
+      longitude: lon,
+      level: "UNAVAILABLE",
+      warning: null,
+      isWatch: null,
+      advisoryText: "Could not parse IMD Marine Warning data.",
+      factors: [],
+      lightningWarning: null,
+      strongWindWarning: null,
+      squallWarning: null,
+      checkedAt: new Date().toISOString()
+    };
+  }
+
+  const color = selectedRow.color;
+  const rowText = selectedRow.text;
   const level = classifyImdColor(color);
 
   const lowerText = rowText.toLowerCase();
