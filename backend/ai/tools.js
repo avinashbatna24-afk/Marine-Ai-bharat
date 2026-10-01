@@ -571,18 +571,14 @@ export const tools = {
 
     const live = await fetchBackend("/fishing-route/find", {
       method: "POST",
-
+      timeoutMs: PFZ_TIMEOUT_MS,
       body: {
         latitude,
         longitude,
         targetDate,
-
         rows: Number(params.rows || 5),
-
         cols: Number(params.cols || 5),
-
         hazardCells: params.hazardCells || [],
-
         restrictedCells: params.restrictedCells || [],
       },
     });

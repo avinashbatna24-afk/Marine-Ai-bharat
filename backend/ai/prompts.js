@@ -95,6 +95,7 @@ NUMERIC DATA RULES:
 - Do not invent measurements, risk scores, warning levels, PFZ scores, or coordinates.
 - Do NOT invent route distance, safety status, PFZ ID, or route nodes. Use ONLY the explicit outputs from the findSafeRoute or other deterministic tools.
 - When reporting route distance, strictly use the 'distanceKm' field from the tool output. Do NOT confuse 'gridSteps' or node count with route distance.
+- If findSafeRoute returns success=false, you MUST NOT claim that a route was calculated. You must accurately state that route generation was unavailable and safety could not be confirmed.
 - Use the units provided by the tool results.
 
 Output format requirement:
