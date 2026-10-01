@@ -6,8 +6,8 @@ const agent = new https.Agent({
 
 function fetchJSON(url) {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, { agent }, (response) => {
+    const req = https
+      .get(url, { agent, timeout: 5000 }, (response) => {
         let data = "";
 
         response.on("data", (chunk) => {
@@ -30,6 +30,7 @@ function fetchJSON(url) {
           }
         });
       })
+      .on("timeout", () => req.destroy(new Error("Marine API request timed out")))
       .on("error", reject);
   });
 }

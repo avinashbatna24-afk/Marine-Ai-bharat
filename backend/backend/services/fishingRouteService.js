@@ -108,14 +108,53 @@ async function findBestFishingRoute({
   const destination = pfzResult.recommendedZone;
 
   // 3. Get marine conditions.
-  const marineData = targetDate 
-    ? await getMarineForecast(latitude, longitude, targetDate) 
-    : await getMarineConditions(latitude, longitude);
+  let marineData;
+  try {
+    marineData = targetDate 
+      ? await getMarineForecast(latitude, longitude, targetDate) 
+      : await getMarineConditions(latitude, longitude);
+  } catch (error) {
+    console.warn("[FishingRouteService] Marine data unavailable:", error.message);
+    marineData = {
+      latitude,
+      longitude,
+      forecastDate: targetDate,
+      timestamp: null,
+      waveHeight: null,
+      wavePeriod: null,
+      sst: null,
+      currentSpeed: null,
+      currentDirection: null,
+      source: "Open-Meteo Marine API",
+      status: "UNAVAILABLE",
+      updatedAt: new Date().toISOString()
+    };
+  }
 
   // 4. Get weather conditions.
-  const weatherData = targetDate
-    ? await getWeatherForecast(latitude, longitude, targetDate)
-    : await getWeatherConditions(latitude, longitude);
+  let weatherData;
+  try {
+    weatherData = targetDate
+      ? await getWeatherForecast(latitude, longitude, targetDate)
+      : await getWeatherConditions(latitude, longitude);
+  } catch (error) {
+    console.warn("[FishingRouteService] Weather data unavailable:", error.message);
+    weatherData = {
+      latitude,
+      longitude,
+      forecastDate: targetDate,
+      timestamp: null,
+      windSpeed: null,
+      windDirection: null,
+      windGust: null,
+      precipitation: null,
+      precipitationProbability: null,
+      weatherCode: null,
+      source: "Open-Meteo Weather API",
+      status: "UNAVAILABLE",
+      updatedAt: new Date().toISOString()
+    };
+  }
 
   // 5. Safety-critical missing data check
   if (weatherData.windSpeed == null || marineData.waveHeight == null) {

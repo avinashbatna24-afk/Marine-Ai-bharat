@@ -5,10 +5,10 @@ const IMD_WARNING_URL =
 
 function fetchText(url) {
   return new Promise((resolve, reject) => {
-    https
+    const req = https
       .get(
         url,
-        { rejectUnauthorized: false },
+        { rejectUnauthorized: false, timeout: 5000 },
         (response) => {
           let data = "";
 
@@ -29,6 +29,7 @@ function fetchText(url) {
           });
         }
       )
+      .on("timeout", () => req.destroy(new Error("IMD warning request timed out")))
       .on("error", reject);
   });
 }

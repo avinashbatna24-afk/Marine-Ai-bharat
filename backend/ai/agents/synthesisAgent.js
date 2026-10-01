@@ -285,6 +285,24 @@ function enforceSafetyAnswer(
   }
 
   // ==================================================
+  // ROUTE GENERATION FAILURE GUARD
+  // ==================================================
+  const routeTool = toolResults.findSafeRoute;
+  if (routeTool && routeTool.success === false) {
+    if (recommendation === "UNKNOWN_VERIFY_LOCALLY" || recommendation === "UNKNOWN") {
+      if (lang === "te") {
+        return `లైవ్ మార్గం తయారీ ప్రస్తుతం అందుబాటులో లేదు, కాబట్టి సురక్షిత మార్గం ధృవీకరించబడలేదు. అందుబాటులో లేని మార్గం/భద్రతా డేటా నుండి సముద్ర భద్రతను నిర్ధారించలేము.`;
+      }
+      return `Live route generation is currently unavailable, so no verified safe route was generated. Marine safety cannot be confirmed from the unavailable route/safety data.`;
+    } else {
+      if (lang === "te") {
+        return `లైవ్ మార్గం తయారీ ప్రస్తుతం అందుబాటులో లేదు, కాబట్టి సురక్షిత మార్గం ధృవీకరించబడలేదు. ${answer}`;
+      }
+      return `Live route generation is currently unavailable, so no verified safe route was generated. ${answer}`;
+    }
+  }
+
+  // ==================================================
   // UNKNOWN
   // ==================================================
 
