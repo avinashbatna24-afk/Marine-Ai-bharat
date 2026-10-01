@@ -28,6 +28,7 @@ export default function SafeRoutesPage() {
   const navigate = useNavigate();
   const routerLocation = useRouterLocation();
   const targetDate = routerLocation.state?.targetDate || null;
+  const targetPfzId = routerLocation.state?.targetPfzId || 'PFZ-001';
   const { selectedLocation, refreshTrigger } = useLocation();
 
   const startLat = selectedLocation?.lat ?? 16.98;
@@ -61,7 +62,7 @@ export default function SafeRoutesPage() {
         const routeRes = await findFishingRoute({
           startLat: startCoords[0],
           startLon: startCoords[1],
-          targetPfzId: 'PFZ-001',
+          targetPfzId,
           targetDate
         });
 
@@ -434,13 +435,13 @@ export default function SafeRoutesPage() {
             <div className="bg-[#3E7C6B]/15 border border-[#3E7C6B]/40 rounded-xl p-3.5 space-y-1.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#3E7C6B]">
-                  <ShieldCheck className={`w-4 h-4 ${isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'}`} />
-                  <span className={isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'}>
-                    {isRouteSafe ? 'Recommended Route (A)' : 'Route Blocked'}
+                  <ShieldCheck className={`w-4 h-4 ${isRouteSafe ? 'text-[#3E7C6B]' : routeStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}`} />
+                  <span className={isRouteSafe ? 'text-[#3E7C6B]' : routeStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}>
+                    {isRouteSafe ? 'Recommended Route (A)' : routeStatus === 'UNAVAILABLE' ? 'Route Unavailable' : 'Route Blocked'}
                   </span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/50' : 'bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/50'}`}>
-                  {isRouteSafe ? 'Clear' : 'DO NOT SAIL'}
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/50' : routeStatus === 'UNAVAILABLE' ? 'bg-[#C9A961]/25 text-[#C9A961] border border-[#C9A961]/50' : 'bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/50'}`}>
+                  {isRouteSafe ? 'Clear' : routeStatus === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'DO NOT SAIL'}
                 </span>
               </div>
               <p className="text-[11px] text-[#D8D2C2]">
@@ -461,14 +462,14 @@ export default function SafeRoutesPage() {
 
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A] text-center">
                 <span className="text-[10px] text-[#8EA5B5] font-medium block">Risk Level</span>
-                <span className={`font-mono font-extrabold text-sm ${isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'}`}>{isRouteSafe ? 'LOW' : 'HIGH'}</span>
+                <span className={`font-mono font-extrabold text-sm ${isRouteSafe ? 'text-[#3E7C6B]' : routeStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}`}>{isRouteSafe ? 'LOW' : routeStatus === 'UNAVAILABLE' ? '--' : 'HIGH'}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A]">
                 <span className="text-[10px] text-[#8EA5B5] font-medium block">Fuel Estimate</span>
-                <span className="font-mono font-bold text-[#D8D2C2] text-sm">21.4 L</span>
+                <span className="font-mono font-bold text-[#D8D2C2] text-sm">--</span>
               </div>
 
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A]">

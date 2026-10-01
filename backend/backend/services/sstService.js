@@ -7,7 +7,7 @@ function fetchSST(latitude, longitude) {
   return new Promise((resolve, reject) => {
     const url = `${MUR_SST_URL}?analysed_sst[last][(${latitude})][(${longitude})]`;
 
-    https
+    const req = https
       .get(
         url,
         {
@@ -15,6 +15,7 @@ function fetchSST(latitude, longitude) {
             Accept: "text/csv",
             "User-Agent": "Marine-AI/1.0",
           },
+          timeout: 5000,
         },
         (res) => {
           let data = "";
@@ -57,6 +58,11 @@ function fetchSST(latitude, longitude) {
         },
       )
       .on("error", reject);
+
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error("MUR SST API request timed out"));
+    });
   });
 }
 

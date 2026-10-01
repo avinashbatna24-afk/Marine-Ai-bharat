@@ -392,7 +392,7 @@ async function getNearbyPFZs(latitude, longitude, limit = 5) {
 
   return pfzsWithLiveData;
 }
-async function rankPFZs(latitude, longitude, limit = 5) {
+async function rankPFZs(latitude, longitude, limit = 5, targetPfzId = null) {
   const userLatitude = Number(latitude);
   const userLongitude = Number(longitude);
 
@@ -408,9 +408,9 @@ async function rankPFZs(latitude, longitude, limit = 5) {
    */
   const pfzs = await getPFZs("ALL");
 
-  const candidateLimit = Math.max(Number(limit) * 3, 10);
+  const candidateLimit = Math.max(Number(limit) * 2, 5);
 
-  const candidates = pfzs
+  let candidates = pfzs
     .map((pfz) => ({
       ...pfz,
       distanceKm: Number(
@@ -424,6 +424,21 @@ async function rankPFZs(latitude, longitude, limit = 5) {
     }))
     .sort((a, b) => a.distanceKm - b.distanceKm)
     .slice(0, candidateLimit);
+
+  if (targetPfzId) {
+    const cleanId = targetPfzId.replace(/[^0-9]/g, '');
+    const target = pfzs.find(c => {
+      if (c.id === targetPfzId || c.id.includes(targetPfzId) || c.id.endsWith(targetPfzId)) return true;
+      if (cleanId && c.id.includes(cleanId)) return true;
+      return false;
+    });
+    if (target) {
+      target.distanceKm = Number(
+        calculateDistanceKm(userLatitude, userLongitude, target.latitude, target.longitude).toFixed(2)
+      );
+      candidates = [target];
+    }
+  }
 
   /*
    * Enrich only the candidate PFZs.

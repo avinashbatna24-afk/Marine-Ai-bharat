@@ -47,7 +47,7 @@ export function adaptTelemetry(weatherData = {}, oceanData = {}) {
     chlorophyll: {
       value: o.chlorophyll ?? null,
       unit: 'mg/m³',
-      label: o.chlorophyll != null ? 'High' : 'Unknown'
+      label: o.chlorophyll != null ? 'High' : 'Unavailable'
     },
     current: {
       speed: o.currentSpeed ?? null,

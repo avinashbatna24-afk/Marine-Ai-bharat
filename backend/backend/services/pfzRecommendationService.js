@@ -1,6 +1,6 @@
 const { rankPFZs } = require("./pfzService");
 
-async function getBestFishingZones({ latitude, longitude, maxDistance = 150 }) {
+async function getBestFishingZones({ latitude, longitude, maxDistance = 150, targetPfzId = null }) {
   latitude = Number(latitude);
   longitude = Number(longitude);
 
@@ -10,8 +10,8 @@ async function getBestFishingZones({ latitude, longitude, maxDistance = 150 }) {
       message: "Valid latitude and longitude are required",
     };
   }
-
-  const ranked = await rankPFZs(latitude, longitude, 10);
+  // We only need 1 recommended + 3 alternatives = 4 total
+  const ranked = await rankPFZs(latitude, longitude, 4, targetPfzId);
 
   const filtered = ranked.filter((pfz) => (pfz.distanceKm ?? 0) <= maxDistance);
 

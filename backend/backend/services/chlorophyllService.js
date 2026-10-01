@@ -38,10 +38,11 @@ function downloadCHLRaster(
       `&width=${resolution}` +
       `&height=${resolution}`;
 
-    https
+    const req = https
       .get(
         url,
         {
+          timeout: 5000,
           headers: {
             Accept: "image/tiff",
             "User-Agent": "Marine-AI/1.0",
@@ -63,6 +64,7 @@ function downloadCHLRaster(
           });
         },
       )
+      .on("timeout", () => req.destroy(new Error("INCOIS WCS request timed out")))
       .on("error", reject);
   });
 }

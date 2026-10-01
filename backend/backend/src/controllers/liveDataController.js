@@ -9,6 +9,7 @@ const {
   getMarineForecast,
 } = require("../../services/marineDataService");
 const { getMarineWarnings } = require("../../services/marineWarningService");
+const { fetchChlorophyll } = require("../../services/chlorophyllService");
 
 function getCoordinates(req) {
   const latitude = Number(req.query.latitude ?? req.query.lat);
@@ -66,6 +67,14 @@ async function getOcean(req, res) {
       coordinates.latitude,
       coordinates.longitude,
     );
+    
+    try {
+      const chlData = await fetchChlorophyll(coordinates.latitude, coordinates.longitude);
+      data.chlorophyll = chlData.chlorophyll;
+    } catch (e) {
+      console.warn("Chlorophyll fetch failed:", e.message);
+      data.chlorophyll = null;
+    }
 
     res.json({
       success: true,

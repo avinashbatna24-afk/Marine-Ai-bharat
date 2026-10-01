@@ -24,6 +24,10 @@ export default function MarineMapPage() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [basemap, setBasemap] = useState('satellite');
 
+  useEffect(() => {
+    window.__test_navigate = (id) => navigate('/safe-routes', { state: { targetPfzId: id } });
+  }, [navigate]);
+
   // Zoom / Recenter state triggers
   const [zoomInTrigger, setZoomInTrigger] = useState(0);
   const [zoomOutTrigger, setZoomOutTrigger] = useState(0);
@@ -407,7 +411,7 @@ export default function MarineMapPage() {
 
                     <div className="flex items-center gap-1.5 pt-1">
                       <button
-                        onClick={() => navigate('/safe-routes')}
+                        onClick={() => navigate('/safe-routes', { state: { targetPfzId: pfz.id } })}
                         className="flex-1 py-1 px-2 bg-[#00B4D8] hover:bg-[#0096B4] text-[#001F3F] font-bold text-[11px] rounded transition-all cursor-pointer flex items-center justify-center gap-1"
                       >
                         <Navigation className="w-3 h-3" />
