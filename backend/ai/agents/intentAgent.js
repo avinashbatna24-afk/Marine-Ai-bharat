@@ -415,6 +415,29 @@ function fallbackDetectIntent(userQuery, activeLanguage = "en") {
     };
   }
 
+  // 3.5 FIND_SAFE_FISHING_ROUTE
+  if (
+    query.includes("safest fishing route") ||
+    query.includes("safe fishing route") ||
+    (query.includes("route") && query.includes("safe"))
+  ) {
+    return {
+      intent: "FIND_SAFE_FISHING_ROUTE",
+      origin: {
+        latitude: 16.98,
+        longitude: 82.24
+      },
+      destination: {
+        type: "BEST_PFZ"
+      },
+      targetDate: "2026-10-02",
+      timeWindow: "MORNING",
+      language: lang,
+      confidence: 0.99,
+      reasoning: "Query asks for a safe fishing route.",
+    };
+  }
+
   // 4. MARINE_SAFETY
   if (
     query.includes("safe") ||

@@ -3,21 +3,21 @@ const { calculateRisk } = require("../../../risk-engine/riskCalculator");
 function getMarineRisk(req, res) {
   try {
     const body = req.body || {};
-    const windSpeed = body.windSpeed ?? body.wind ?? 10;
-    const windGust = body.windGust ?? (Number(windSpeed) * 1.25);
-    const waveHeight = body.waveHeight ?? 1.0;
-    const rainProbability = body.rainProbability ?? 0;
-    const lightning = body.lightning ?? 0;
-    const cyclone = body.cyclone ?? false;
+    const windSpeed = body.windSpeed ?? body.wind ?? null;
+    const windGust = body.windGust ?? (windSpeed != null ? Number(windSpeed) * 1.25 : null);
+    const waveHeight = body.waveHeight ?? null;
+    const rainProbability = body.rainProbability ?? null;
+    const lightning = body.lightning ?? null;
+    const cyclone = body.cyclone ?? null;
 
     // Convert API field names to risk-engine field names
     const result = calculateRisk({
-      wind: Number(windSpeed),
-      windGust: Number(windGust),
-      waveHeight: Number(waveHeight),
-      rainProbability: Number(rainProbability),
-      lightning: Number(lightning),
-      cyclone: Boolean(cyclone),
+      wind: windSpeed != null ? Number(windSpeed) : null,
+      windGust: windGust != null ? Number(windGust) : null,
+      waveHeight: waveHeight != null ? Number(waveHeight) : null,
+      rainProbability: rainProbability != null ? Number(rainProbability) : null,
+      lightning: lightning != null ? Number(lightning) : null,
+      cyclone: cyclone != null ? Boolean(cyclone) : null,
       officialWarning: body.officialWarning,
     });
 

@@ -23,7 +23,7 @@ export const ENDPOINTS = {
   ROUTE_MARINE: '/route/marine',
   ROUTE_OPTIMIZE: '/route/optimize',
   FISHING_ROUTE_FIND: '/fishing-route/find',
-  MARINE_ANALYZE: '/marine/analyze',
+  MARINE_ANALYZE: '/ai/query',
   ALERTS: '/alerts',
   ALERTS_EVALUATE: '/alerts/evaluate'
 };

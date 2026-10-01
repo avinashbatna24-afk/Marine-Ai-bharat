@@ -482,14 +482,12 @@ export const tools = {
       method: "POST",
 
       body: {
-        windSpeed: Number(params.windSpeed ?? marine.wind ?? 0),
-        windGust: Number(params.windGust ?? marine.windGust ?? 0),
-        waveHeight: Number(params.waveHeight ?? marine.waveHeight ?? 0),
-        rainProbability: Number(
-          params.rainProbability ?? marine.rainProbability ?? 0,
-        ),
-        lightning: Number(params.lightning ?? marine.lightning ?? 0),
-        cyclone: Boolean(params.cyclone ?? marine.cyclone ?? false),
+        windSpeed: params.windSpeed ?? marine.wind ?? null,
+        windGust: params.windGust ?? marine.windGust ?? null,
+        waveHeight: params.waveHeight ?? marine.waveHeight ?? null,
+        rainProbability: params.rainProbability ?? marine.rainProbability ?? null,
+        lightning: params.lightning ?? marine.lightning ?? null,
+        cyclone: params.cyclone ?? marine.cyclone ?? null,
       },
     });
 

@@ -64,12 +64,27 @@ export async function optimizeRoute(routeInput = {}) {
  * @param {Object} routeInput - { startLat, startLon, targetPfzId }
  */
 export async function findFishingRoute(routeInput = {}) {
-  return withFallback(
-    async () => {
-      const res = await endpoints.fishingRouteFind(routeInput);
-      return adaptRouteRepresentation(res);
-    },
-    MOCK_ROUTE_FALLBACK,
-    'FishingRoute'
-  );
+  try {
+    const res = await endpoints.fishingRouteFind(routeInput);
+    // Safety-blocked responses (DO_NOT_SAIL, UNKNOWN) legitimately return success: false.
+    // These are valid live responses — not network failures — so we pass them through as
+    // live data and never flag isFallback for a structured safetyStatus response.
+    const adapted = adaptRouteRepresentation(res);
+    return {
+      data: adapted,
+      source: 'live',
+      isFallback: false,
+      error: null
+    };
+  } catch (error) {
+    console.warn('[MarineAI] FishingRoute API unavailable:', error.message || error);
+    return {
+      data: null,
+      source: 'unavailable',
+      isFallback: true,
+      success: false,
+      reason: 'LIVE_DATA_UNAVAILABLE',
+      error: { message: error.isTimeout ? 'Request timed out' : (error.message || 'API unavailable'), status: error.status || null }
+    };
+  }
 }

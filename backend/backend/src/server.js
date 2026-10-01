@@ -15,6 +15,8 @@ try { sstRoutes = require("./routes/sstRoutes"); } catch (e) { console.warn("Not
 try { marineRouteRoutes = require("./routes/marineRouteRoutes"); } catch (e) { console.warn("Notice: marineRouteRoutes not loaded:", e.message); }
 try { fishingRouteRoutes = require("./routes/fishingRouteRoutes"); } catch (e) { console.warn("Notice: fishingRouteRoutes not loaded:", e.message); }
 try { routeRoutes = require("./routes/routeRoutes"); } catch (e) { console.warn("Notice: routeRoutes not loaded:", e.message); }
+let aiRoutes;
+try { aiRoutes = require("./routes/aiRoutes"); } catch (e) { console.warn("Notice: aiRoutes not loaded:", e.message); }
 
 const app = express();
 
@@ -89,6 +91,7 @@ if (fishingRouteRoutes) app.use("/api/fishing-route", fishingRouteRoutes);
 if (routeRoutes) app.use("/api/route", routeRoutes);
 if (marineAnalyzeRoutes) app.use("/api/marine/analyze", marineAnalyzeRoutes);
 if (alertRoutes) app.use("/api/alerts", alertRoutes);
+if (aiRoutes) app.use("/api/ai", aiRoutes);
 
 // ========================================
 // ERROR HANDLING MIDDLEWARE

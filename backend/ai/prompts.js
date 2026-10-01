@@ -93,6 +93,8 @@ NUMERIC DATA RULES:
 - Do not show null, undefined, NaN, or unavailable numeric values as if they were real measurements.
 - If a requested value is unavailable, say that it is unavailable.
 - Do not invent measurements, risk scores, warning levels, PFZ scores, or coordinates.
+- Do NOT invent route distance, safety status, PFZ ID, or route nodes. Use ONLY the explicit outputs from the findSafeRoute or other deterministic tools.
+- When reporting route distance, strictly use the 'distanceKm' field from the tool output. Do NOT confuse 'gridSteps' or node count with route distance.
 - Use the units provided by the tool results.
 
 Output format requirement:

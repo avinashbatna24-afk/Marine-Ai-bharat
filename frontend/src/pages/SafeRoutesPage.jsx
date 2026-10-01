@@ -28,7 +28,7 @@ export default function SafeRoutesPage() {
   const navigate = useNavigate();
   const routerLocation = useRouterLocation();
   const targetDate = routerLocation.state?.targetDate || null;
-  const targetPfzId = routerLocation.state?.targetPfzId || 'PFZ-001';
+  const targetPfzId = routerLocation.state?.targetPfzId || null;
   const { selectedLocation, refreshTrigger } = useLocation();
 
   const startLat = selectedLocation?.lat ?? 16.98;
@@ -96,16 +96,35 @@ export default function SafeRoutesPage() {
   const routeData = routeState.data || {};
   const isFallback = routeState.isFallback || geofenceCheckState.isFallback;
 
-  const routeDistance = routeData?.distanceKm ? `${Number(routeData.distanceKm).toFixed(1)} km` : 'Unavailable';
-  const routeStatus = routeData?.geofenceStatus || (isFallback ? 'UNAVAILABLE' : 'UNKNOWN');
-  const isRouteSafe = routeStatus === 'ROUTE_SAFE' || routeStatus === 'CLEAR';
-
   const liveRoutePoints = useMemo(() => {
     if (routeData && routeData.waypoints && routeData.waypoints.length > 0) {
       return routeData.waypoints.map(wp => [wp.lat, wp.lon]);
     }
     return [];
   }, [routeData]);
+
+  const hasValidRoute = liveRoutePoints.length >= 2;
+  const backendSafety = routeData?.safetyStatus || 'UNKNOWN';
+  const geofenceStatus = routeData?.geofenceStatus || 'CLEAR';
+
+  // Determine final route status
+  let finalStatus = 'UNAVAILABLE';
+  let isRouteSafe = false;
+
+  if (backendSafety === 'DO_NOT_SAIL') {
+    finalStatus = 'DO_NOT_SAIL';
+  } else if (backendSafety === 'UNKNOWN' || (isFallback && !hasValidRoute)) {
+    finalStatus = 'UNKNOWN';
+  } else if (backendSafety === 'SAFE') {
+    if (geofenceStatus === 'BLOCKED') {
+      finalStatus = 'BLOCKED';
+    } else {
+      finalStatus = 'SAFE';
+      isRouteSafe = true;
+    }
+  }
+
+  const routeDistance = hasValidRoute && routeData?.distanceKm ? `${Number(routeData.distanceKm).toFixed(1)} km` : '--';
 
   const routeBPoints = [];
 
@@ -152,8 +171,6 @@ export default function SafeRoutesPage() {
     iconSize: [30, 30],
     iconAnchor: [15, 15]
   }), []);
-
-  const hasValidRoute = liveRoutePoints.length > 0;
 
   return (
     <div className="max-w-[1680px] mx-auto pb-12">
@@ -275,8 +292,8 @@ export default function SafeRoutesPage() {
                       <div className="text-[11px] text-slate-200 space-y-0.5">
                         <p><strong>Status:</strong> 100% Clear Navigable Waters</p>
                         <p><strong>Hazard Clearance:</strong> &gt; 5.2 NM Outside Danger Zone</p>
-                        <p><strong>Est. Distance:</strong> {routeDistance} | <strong>ETA:</strong> ~54 min</p>
-                        <p><strong>Fuel Consumption:</strong> 21.4 L (Eco-Optimized)</p>
+                        <p><strong>Est. Distance:</strong> {routeDistance} | <strong>ETA:</strong> --</p>
+                        <p><strong>Fuel Consumption:</strong> {routeData?.fuelEstimate || '--'} L (Eco-Optimized)</p>
                       </div>
                     </div>
                   </Tooltip>
@@ -305,10 +322,10 @@ export default function SafeRoutesPage() {
                 </Marker>
 
                 {/* TARGET MARKER */}
-                <Marker position={targetCoords} icon={targetMarkerIcon}>
+                <Marker position={hasValidRoute ? liveRoutePoints[liveRoutePoints.length - 1] : targetCoords} icon={targetMarkerIcon}>
                   <Tooltip permanent direction="top" offset={[0, -18]} className="map-station-tooltip">
                     <span className="font-bold text-[10px] text-emerald-950 bg-white/95 px-2 py-0.5 rounded shadow-sm flex items-center gap-1 border border-emerald-500/50">
-                      🎯 Destination: INCOIS PFZ (PFZ-001)
+                      🎯 Destination: {targetPfzId}
                     </span>
                   </Tooltip>
                   <Popup>
@@ -316,8 +333,10 @@ export default function SafeRoutesPage() {
                       <div className="font-bold text-emerald-600 flex items-center gap-1">
                         <span>🎯 INCOIS PFZ Destination</span>
                       </div>
-                      <div className="text-slate-800 font-semibold text-[11px] mt-0.5">Optimal Catch Ground (PFZ-001)</div>
-                      <div className="text-slate-600 text-[10px] font-mono mt-0.5">{targetCoords[0].toFixed(4)}° N, {targetCoords[1].toFixed(4)}° E</div>
+                      <div className="text-slate-800 font-semibold text-[11px] mt-0.5">Optimal Catch Ground ({targetPfzId})</div>
+                      <div className="text-slate-600 text-[10px] font-mono mt-0.5">
+                        {(hasValidRoute ? liveRoutePoints[liveRoutePoints.length - 1][0] : targetCoords[0]).toFixed(4)}° N, {(hasValidRoute ? liveRoutePoints[liveRoutePoints.length - 1][1] : targetCoords[1]).toFixed(4)}° E
+                      </div>
                       <div className="text-emerald-700 font-semibold text-[10px] mt-1 border-t border-slate-200 pt-1">
                         INCOIS High Fish Density Zone • Depth: ~45m
                       </div>
@@ -434,18 +453,18 @@ export default function SafeRoutesPage() {
 
             <div className="bg-[#3E7C6B]/15 border border-[#3E7C6B]/40 rounded-xl p-3.5 space-y-1.5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#3E7C6B]">
-                  <ShieldCheck className={`w-4 h-4 ${isRouteSafe ? 'text-[#3E7C6B]' : routeStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}`} />
-                  <span className={isRouteSafe ? 'text-[#3E7C6B]' : routeStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}>
-                    {isRouteSafe ? 'Recommended Route (A)' : routeStatus === 'UNAVAILABLE' ? 'Route Unavailable' : 'Route Blocked'}
+                <div className={`flex items-center gap-2 text-xs font-bold ${isRouteSafe ? 'text-[#3E7C6B]' : finalStatus === 'UNKNOWN' || finalStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}`}>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>
+                    {isRouteSafe ? 'Recommended Route (A)' : finalStatus === 'UNKNOWN' ? 'Route Unavailable' : finalStatus === 'DO_NOT_SAIL' ? 'Route Blocked' : 'Route Unavailable'}
                   </span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/50' : routeStatus === 'UNAVAILABLE' ? 'bg-[#C9A961]/25 text-[#C9A961] border border-[#C9A961]/50' : 'bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/50'}`}>
-                  {isRouteSafe ? 'Clear' : routeStatus === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'DO NOT SAIL'}
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/50' : finalStatus === 'UNKNOWN' || finalStatus === 'UNAVAILABLE' ? 'bg-[#C9A961]/25 text-[#C9A961] border border-[#C9A961]/50' : 'bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/50'}`}>
+                  {isRouteSafe ? 'Clear' : finalStatus === 'UNKNOWN' ? 'SAFETY UNKNOWN' : finalStatus === 'DO_NOT_SAIL' ? 'DO NOT SAIL' : 'UNAVAILABLE'}
                 </span>
               </div>
               <p className="text-[11px] text-[#D8D2C2]">
-                {routeData.summary || 'Solver evaluated wind, wave swell and geofences to ensure maximum passage safety.'}
+                {routeData.explanation || routeData.summary || (isRouteSafe ? 'Solver evaluated wind, wave swell and geofences to ensure maximum passage safety.' : 'Route could not be calculated.')}
               </p>
             </div>
 
@@ -462,7 +481,9 @@ export default function SafeRoutesPage() {
 
               <div className="bg-[#0B1E2D] p-2.5 rounded-lg border border-[#1E3F5A] text-center">
                 <span className="text-[10px] text-[#8EA5B5] font-medium block">Risk Level</span>
-                <span className={`font-mono font-extrabold text-sm ${isRouteSafe ? 'text-[#3E7C6B]' : routeStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}`}>{isRouteSafe ? 'LOW' : routeStatus === 'UNAVAILABLE' ? '--' : 'HIGH'}</span>
+                <span className={`font-mono font-extrabold text-sm ${isRouteSafe ? 'text-[#3E7C6B]' : finalStatus === 'UNKNOWN' || finalStatus === 'UNAVAILABLE' ? 'text-[#C9A961]' : 'text-[#EF4444]'}`}>
+                  {isRouteSafe ? 'LOW' : finalStatus === 'UNKNOWN' || finalStatus === 'UNAVAILABLE' ? '--' : 'HIGH'}
+                </span>
               </div>
             </div>
 
@@ -489,17 +510,20 @@ export default function SafeRoutesPage() {
                 onClick={() => setSelectedRoute('Route A')}
                 className={`p-2.5 rounded-lg border flex items-center justify-between transition-all cursor-pointer ${
                   selectedRoute === 'Route A'
-                    ? 'bg-[#3E7C6B]/15 border-[#3E7C6B] font-semibold'
+                    ? (isRouteSafe ? 'bg-[#3E7C6B]/15 border-[#3E7C6B] font-semibold' : 'bg-[#EF4444]/15 border-[#EF4444] font-semibold')
                     : 'bg-[#0B1E2D] border-[#1E3F5A] hover:bg-[#183852]'
                 }`}
               >
-                <span className="text-[#3E7C6B] font-bold">Route A (Recommended)</span>
+                <span className={`${isRouteSafe ? 'text-[#3E7C6B]' : 'text-[#EF4444]'} font-bold`}>
+                  {hasValidRoute ? (isRouteSafe ? 'Route A (Recommended)' : 'Route A (High Risk)') : 'Route Unavailable'}
+                </span>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-[#D8D2C2]">{routeDistance}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/40">LOW</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isRouteSafe ? 'bg-[#3E7C6B]/25 text-[#3E7C6B] border border-[#3E7C6B]/40' : 'bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/40'}`}>
+                    {hasValidRoute ? (isRouteSafe ? 'LOW' : 'HIGH') : '--'}
+                  </span>
                 </div>
               </div>
-
 
             </div>
           </div>

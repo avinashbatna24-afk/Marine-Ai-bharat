@@ -166,13 +166,22 @@ export function toGeoJSONCoords(point) {
 export function adaptAiResponse(raw) {
   if (!raw) return null;
   const aiResult = raw.data || raw;
-  const intent = aiResult.intent || 'GENERAL_QUERY';
+  const intentObj = aiResult.intent || {};
+  const intent = typeof intentObj === 'string' ? intentObj : (intentObj.intent || 'GENERAL_QUERY');
   const isSafety = Boolean(
     aiResult.isSafetyQuery ?? 
-    (intent === 'FISHING_SAFETY' || intent === 'RISK')
+    (intent === 'FISHING_SAFETY' || intent === 'RISK' || intent === 'SAFE_ROUTE' || intent === 'HAZARD_ALERT')
   );
-  const decisionStatus = aiResult.decisionStatus || aiResult.safety?.status || aiResult.decision?.status || null;
-  const answer = aiResult.formattedAnswer || aiResult.answer || aiResult.decision?.summary || aiResult.response || aiResult.text || 'Telemetry analysis complete.';
+  const decisionStatus = aiResult.deterministicDecision?.safetyStatus || aiResult.decisionStatus || aiResult.safety?.status || aiResult.decision?.status || null;
+  const answer = aiResult.synthesis || aiResult.formattedAnswer || aiResult.answer || aiResult.decision?.summary || aiResult.response || aiResult.text || 'Telemetry analysis complete.';
+
+  const getToolData = (toolName) => aiResult.toolCalls?.find(t => t.tool === toolName)?.output?.data || aiResult.toolCalls?.find(t => t.tool === toolName)?.output;
+  const findSafeRouteData = getToolData('findSafeRoute') || {};
+  const riskMapData = getToolData('getRiskMap') || {};
+  const pfzData = getToolData('getNearbyPFZ') || {};
+  
+  const extractedRiskScore = findSafeRouteData.totalRiskCost ?? riskMapData.maxRiskCost ?? null;
+  const extractedRiskLevel = extractedRiskScore > 30 ? 'HIGH' : (extractedRiskScore > 10 ? 'MODERATE' : 'LOW');
 
   return {
     ...aiResult,
@@ -181,26 +190,26 @@ export function adaptAiResponse(raw) {
     formattedAnswer: answer,
     recommendation: aiResult.recommendation || aiResult.safety?.reason || '',
     evidence: aiResult.evidence || {
-      riskScore: aiResult.safety?.riskScore ?? aiResult.risk?.score,
-      riskLevel: aiResult.safety?.riskLevel ?? aiResult.risk?.level,
-      nearestPfzKm: aiResult.pfz?.recommendedZone?.distanceKm,
-      weather: aiResult.weather,
-      ocean: aiResult.ocean,
-      geofence: aiResult.geofence,
-      warning: aiResult.warning
+      riskScore: aiResult.safety?.riskScore ?? aiResult.risk?.score ?? extractedRiskScore,
+      riskLevel: aiResult.safety?.riskLevel ?? aiResult.risk?.level ?? extractedRiskLevel,
+      nearestPfzKm: aiResult.pfz?.recommendedZone?.distanceKm ?? findSafeRouteData.distanceKm ?? pfzData.pfzs?.[0]?.distanceKm,
+      weather: getToolData('getWeather'),
+      ocean: getToolData('getOceanConditions'),
+      geofence: getToolData('checkGeofence'),
+      warning: getToolData('getWarnings')
     },
     context: aiResult.context || null,
-    confidence: aiResult.confidenceScore ?? aiResult.confidence ?? 0.95,
-    plannerPlan: aiResult.plannerPlan || null,
+    confidence: aiResult.confidenceScore ?? aiResult.confidence ?? intentObj.confidence ?? 0.95,
+    plannerPlan: aiResult.plan || aiResult.plannerPlan || null,
     isSafetyQuery: isSafety,
     decisionStatus: isSafety ? decisionStatus : null,
-    safetyScore: isSafety ? (aiResult.safetyScore ?? (aiResult.safety?.riskScore != null ? 100 - aiResult.safety.riskScore : null)) : null,
-    riskScore: isSafety ? (aiResult.riskScore ?? aiResult.safety?.riskScore ?? aiResult.decision?.riskScore ?? null) : null,
-    riskLevel: isSafety ? (aiResult.riskLevel ?? aiResult.safety?.riskLevel ?? aiResult.decision?.riskLevel ?? null) : null,
-    nearestPfz: aiResult.pfz?.recommendedZone?.name || aiResult.nearestPfz || null,
-    pfzDistance: aiResult.pfz?.recommendedZone?.distanceKm || aiResult.pfzDistance || null,
-    reason: isSafety ? (aiResult.decision?.reason || aiResult.safety?.reason || aiResult.reason || '') : '',
-    geofence: aiResult.geofence || null
+    safetyScore: isSafety ? (aiResult.safetyScore ?? (extractedRiskScore != null ? Math.max(0, 100 - extractedRiskScore) : null)) : null,
+    riskScore: isSafety ? (aiResult.riskScore ?? aiResult.safety?.riskScore ?? aiResult.decision?.riskScore ?? extractedRiskScore ?? null) : null,
+    riskLevel: isSafety ? (aiResult.riskLevel ?? aiResult.safety?.riskLevel ?? aiResult.decision?.riskLevel ?? extractedRiskLevel ?? null) : null,
+    nearestPfz: aiResult.pfz?.recommendedZone?.name || aiResult.nearestPfz || pfzData.pfzs?.[0]?.name || null,
+    pfzDistance: aiResult.pfz?.recommendedZone?.distanceKm || aiResult.pfzDistance || findSafeRouteData.distanceKm || null,
+    reason: isSafety ? (aiResult.decision?.reason || aiResult.safety?.reason || aiResult.reason || findSafeRouteData.explanation || '') : '',
+    geofence: aiResult.geofence || getToolData('checkGeofence') || null
   };
 }
 
@@ -222,7 +231,7 @@ export function adaptRouteRepresentation(backendRoute) {
   }
 
   const routeObj = backendRoute.route || backendRoute;
-  const rawWaypoints = routeObj.waypoints || routeObj.path || [];
+  const rawWaypoints = backendRoute.geographicRoute || routeObj.waypoints || routeObj.path || [];
 
   const waypoints = rawWaypoints.map((wp) => {
     if (Array.isArray(wp)) {
@@ -239,10 +248,12 @@ export function adaptRouteRepresentation(backendRoute) {
   return {
     waypoints,
     geoJsonCoordinates,
-    distanceKm: routeObj.distanceKm ?? routeObj.distance_km ?? 0,
-    totalRiskCost: routeObj.totalRiskCost ?? routeObj.totalCost ?? routeObj.riskScore ?? 0,
-    geofenceStatus: routeObj.geofenceStatus || routeObj.geofence_status || 'CLEAR',
-    summary: routeObj.summary || ''
+    distanceKm: backendRoute.distanceKm ?? routeObj.distanceKm ?? routeObj.distance_km ?? 0,
+    totalRiskCost: backendRoute.totalRiskCost ?? routeObj.totalRiskCost ?? routeObj.totalCost ?? routeObj.riskScore ?? 0,
+    geofenceStatus: backendRoute.geofenceStatus ?? routeObj.geofenceStatus ?? routeObj.geofence_status ?? 'CLEAR',
+    summary: backendRoute.summary ?? routeObj.summary ?? '',
+    safetyStatus: backendRoute.safetyStatus || null,
+    explanation: backendRoute.explanation || ''
   };
 }
 

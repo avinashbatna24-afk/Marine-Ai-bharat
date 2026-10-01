@@ -14,6 +14,7 @@ async function getBestFishingZones({ latitude, longitude, maxDistance = 150, tar
   const ranked = await rankPFZs(latitude, longitude, 4, targetPfzId);
 
   const filtered = ranked.filter((pfz) => (pfz.distanceKm ?? 0) <= maxDistance);
+  console.log("DEBUG: filtered.length =", filtered.length, "ranked.length =", ranked.length);
 
   if (filtered.length === 0) {
     return {

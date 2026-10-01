@@ -7,6 +7,7 @@ const { getCycloneStatus } = require("./cycloneService");
 const { planMarineRoute } = require("./marineRouteService");
 const { createGeographicRiskGrid } = require("./geographicRiskGrid");
 const { checkGeofence } = require("./geofenceService");
+const { calculateDistanceKm } = require("./pfzService");
 
 async function findBestFishingRoute({
   latitude,
@@ -116,14 +117,52 @@ async function findBestFishingRoute({
     ? await getWeatherForecast(latitude, longitude, targetDate)
     : await getWeatherConditions(latitude, longitude);
 
-  // 5. Combine live data for the existing risk engine.
+  // 5. Safety-critical missing data check
+  if (weatherData.windSpeed == null || marineData.waveHeight == null) {
+    finalSafetyStatus = "UNKNOWN";
+  }
+
+  // Fast fail again if missing data escalated status to UNKNOWN
+  if (finalSafetyStatus === "UNKNOWN") {
+    return {
+      success: false,
+      fishermanLocation: { latitude, longitude },
+      geofence,
+      recommendedFishingZone: destination,
+      liveMarineData: marineData,
+      liveWeatherData: weatherData,
+      marineWarning: marineWarnings,
+      cyclone: cycloneStatus,
+      safetyStatus: finalSafetyStatus,
+      geographicRiskGrid: [],
+      geographicRiskCoordinates: [],
+      route: [],
+      geographicRoute: [],
+      distance: null,
+      distanceKm: null,
+      risk: { score: 0, level: 'UNKNOWN', factors: [] },
+      totalRiskCost: null,
+      totalCost: null,
+      explanation: "Route calculation blocked. SAFETY UNKNOWN: Required live weather/marine data is unavailable.",
+      avoidedHazards: [],
+      restrictedCells,
+      dataQuality: {
+        marineWarning: 'LIVE_IMD',
+        cyclone: cycloneStatus.status === 'NOT_AVAILABLE' ? 'NOT_AVAILABLE' : 'LIVE_IMD',
+        geofence: 'PROTOTYPE'
+      }
+    };
+  }
+
+  // 6. Combine live data for the existing risk engine.
   const marineConditions = {
-    wind: weatherData.windSpeed ?? 0,
-    waveHeight: marineData.waveHeight ?? 0,
-    rainProbability: weatherData.precipitationProbability ?? 0,
+    wind: weatherData.windSpeed,
+    windGust: weatherData.windGust ?? null,
+    waveHeight: marineData.waveHeight,
+    rainProbability: weatherData.precipitationProbability ?? null,
     lightning: marineWarnings.lightningWarning ? 1 : 0,
     cyclone: cycloneStatus?.active ?? null,
-    currentSpeed: marineData.currentSpeed ?? 0,
+    currentSpeed: marineData.currentSpeed ?? null,
   };
 
   // 6. Convert geographic start/destination
@@ -192,18 +231,29 @@ async function findBestFishingRoute({
 
     // 11. Convert grid route into geographic coordinates.
     geographicRoute = routeResult.success
-      ? createGeographicRoute({
-          route: routeResult.route,
-          start: {
-            latitude,
-            longitude,
-          },
-          destination: {
-            latitude: destination.latitude,
-            longitude: destination.longitude,
-          },
-        })
+      ? routeResult.route.map(cell => ({
+          row: cell.row,
+          col: cell.col,
+          latitude: geographicRiskGrid.coordinates[cell.row][cell.col].latitude,
+          longitude: geographicRiskGrid.coordinates[cell.row][cell.col].longitude,
+        }))
       : [];
+  }
+
+  // Calculate actual geographic distance
+  let totalGeographicDistanceKm = null;
+  if (geographicRoute.length > 1) {
+    totalGeographicDistanceKm = 0;
+    for (let i = 0; i < geographicRoute.length - 1; i++) {
+      totalGeographicDistanceKm += calculateDistanceKm(
+        geographicRoute[i].latitude,
+        geographicRoute[i].longitude,
+        geographicRoute[i + 1].latitude,
+        geographicRoute[i + 1].longitude
+      );
+    }
+    // Round to 1 decimal place
+    totalGeographicDistanceKm = Math.round(totalGeographicDistanceKm * 10) / 10;
   }
 
   // 12. Final response.
@@ -256,6 +306,7 @@ async function findBestFishingRoute({
 
     // Route metrics.
     distance: routeResult.distance ?? null,
+    distanceKm: totalGeographicDistanceKm,
 
     risk: routeResult.risk || geographicRiskGrid.risk,
 

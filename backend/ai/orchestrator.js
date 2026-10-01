@@ -127,12 +127,12 @@ export async function processQuery(
 
         toolParams = {
           ...toolParams,
-          windSpeed: Number(weather.windSpeed ?? 0),
-          windGust: Number(weather.windGust ?? 0),
-          rainProbability: Number(weather.precipitationProbability ?? 0),
-          waveHeight: Number(ocean.waveHeight ?? 0),
-          lightning: Number(warning.lightning ?? 0),
-          cyclone: Boolean(warning.cyclone ?? false),
+          windSpeed: weather.windSpeed !== undefined ? Number(weather.windSpeed) : null,
+          windGust: weather.windGust !== undefined ? Number(weather.windGust) : null,
+          rainProbability: weather.precipitationProbability !== undefined ? Number(weather.precipitationProbability) : null,
+          waveHeight: ocean.waveHeight !== undefined ? Number(ocean.waveHeight) : null,
+          lightning: warning.lightning !== undefined ? Number(warning.lightning) : null,
+          cyclone: warning.cyclone !== undefined ? Boolean(warning.cyclone) : null,
         };
         console.log("========== RISK INPUT DEBUG ==========");
 

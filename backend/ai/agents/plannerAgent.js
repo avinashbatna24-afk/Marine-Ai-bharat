@@ -137,6 +137,8 @@ function fallbackCreatePlan(intent, userQuery) {
         ]
       : ["getWeather", "getOceanConditions", "getWarnings", "calculateRisk"],
 
+    FIND_SAFE_FISHING_ROUTE: ["findSafeRoute"],
+
     /*
      * SAFE ROUTE
      */

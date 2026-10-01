@@ -47,12 +47,17 @@ function applySafetyOverride(recommendation, toolResults = {}) {
   // ==================================================
 
   // Backend safety decision
-  if (marine?.safety?.status === "DO_NOT_SAIL") {
+  const routeResult = toolResults.findSafeRoute?.data;
+  if (marine?.safety?.status === "DO_NOT_SAIL" || routeResult?.safetyStatus === "DO_NOT_SAIL") {
     return "DO_NOT_SAIL";
   }
 
-  if (marine?.safety?.status === "UNKNOWN" || marine?.decision?.status === "UNKNOWN") {
-    return "UNKNOWN_VERIFY_LOCALLY";
+  if (
+    marine?.safety?.status === "UNKNOWN" ||
+    marine?.decision?.status === "UNKNOWN" ||
+    routeResult?.safetyStatus === "UNKNOWN"
+  ) {
+    return "UNKNOWN";
   }
 
   // Any detected hazard explicitly requiring DO_NOT_SAIL
@@ -257,65 +262,26 @@ function enforceSafetyAnswer(
 
   if (recommendation === "DO_NOT_SAIL") {
     const doNotSailHazards = hazards
-      .filter(
-        (hazard) =>
-          hazard.recommendation ===
-          "DO_NOT_SAIL"
-      )
-      .map(
-        (hazard) =>
-          hazard.title
-      );
+      .filter((h) => h.recommendation === "DO_NOT_SAIL")
+      .map((h) => h.title);
 
-    const hazardText =
-      doNotSailHazards.length > 0
-        ? doNotSailHazards.join(", ")
-        : "high-risk marine conditions";
+    const hazardText = doNotSailHazards.length > 0 ? doNotSailHazards.join(", ") : "high-risk marine conditions";
 
     if (lang === "te") {
-      return `ప్రస్తుతం సముద్రంలోకి వేటకు వెళ్లడం సురక్షితం కాదు. ${
-        warnings?.level === "HIGH"
-          ? "IMD నుండి HIGH స్థాయి సముద్ర హెచ్చరిక ఉంది."
-          : ""
-      } గుర్తించిన ప్రమాదాలు: ${hazardText}.`;
+      return `ప్రస్తుతం సముద్రంలోకి వేటకు వెళ్లడం సురక్షితం కాదు. గుర్తించిన ప్రమాదాలు: ${hazardText}. ${answer}`;
     }
-
-    return `Do not venture into the sea at this time. ${
-      warnings?.level === "HIGH"
-        ? "IMD has issued a HIGH marine warning for the reported area. "
-        : ""
-    }Detected hazards: ${hazardText}.`;
+    return `[WARNING: DO NOT SAIL] Navigation is blocked. Detected hazards: ${hazardText}. ${answer}`;
   }
 
   // ==================================================
   // CAUTION
   // ==================================================
 
-  if (
-    recommendation ===
-    "PROCEED_WITH_CAUTION"
-  ) {
-    const cautionHazards = hazards
-      .filter(
-        (hazard) =>
-          hazard.recommendation ===
-          "CAUTION"
-      )
-      .map(
-        (hazard) =>
-          hazard.title
-      );
-
-    const hazardText =
-      cautionHazards.length > 0
-        ? cautionHazards.join(", ")
-        : "elevated marine conditions";
-
+  if (recommendation === "PROCEED_WITH_CAUTION") {
     if (lang === "te") {
-      return `సముద్ర పరిస్థితుల్లో జాగ్రత్త అవసరం. గుర్తించిన పరిస్థితులు: ${hazardText}. సముద్రంలోకి వెళ్లే ముందు తాజా వాతావరణం మరియు అధికారిక హెచ్చరికలను పరిశీలించండి.`;
+      return `సముద్ర పరిస్థితుల్లో జాగ్రత్త అవసరం. సముద్రంలోకి వెళ్లే ముందు తాజా వాతావరణం పరిశీలించండి. ${answer}`;
     }
-
-    return `Proceed only with caution. Detected conditions include: ${hazardText}. Check the latest weather and official marine warnings before entering the sea.`;
+    return `[CAUTION] Proceed only with caution. Check the latest weather and official marine warnings. ${answer}`;
   }
 
   // ==================================================
@@ -324,9 +290,9 @@ function enforceSafetyAnswer(
 
   if (recommendation === "UNKNOWN_VERIFY_LOCALLY" || recommendation === "UNKNOWN") {
     if (lang === "te") {
-      return "అధికారిక వాతావరణ హెచ్చరికలు లేదా తుఫాను సమాచారం ప్రస్తుతం అందుబాటులో లేదు. కాబట్టి సముద్ర భద్రతను నిర్ధారించలేము. దయచేసి స్థానిక అధికారులను సంప్రదించండి.";
+      return `[భద్రత నిర్ధారించబడలేదు] అధికారిక వాతావరణ సమాచారం అందుబాటులో లేదు. సముద్ర భద్రతను నిర్ధారించలేము. ${answer}`;
     }
-    return "Official marine warnings or cyclone information are currently UNAVAILABLE. Therefore, marine safety cannot be confirmed. Please verify with local port authorities before sailing.";
+    return `[SAFETY UNKNOWN] Official marine warnings or weather information are currently unavailable. Marine safety cannot be confirmed. ${answer}`;
   }
 
   return answer;
@@ -905,6 +871,7 @@ function fallbackSynthesizeResponse(
     }
 
     const distance =
+      route?.distanceKm ? `${route.distanceKm} km` :
       route?.distance ??
       "unavailable";
 
